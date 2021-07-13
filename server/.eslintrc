@@ -1,0 +1,74 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json",
+    "sourceType": "module",
+    "ecmaVersion": 2020
+  },
+  "plugins": [
+    "@typescript-eslint/eslint-plugin", 
+    "prettier", // yarn module "eslint-plugin-prettier"
+    "jest",
+    "import" // yarn module "eslint-plugin-import"
+  ],
+  "extends": [
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript",
+    "airbnb-base", // yarn module "eslint-config-airbnb-base"
+    "airbnb-typescript/base", // yarn module "eslint-config-airbnb-typescript/base"
+    "airbnb-typescript", // yarn module "eslint-config-airbnb-typescript" eslint-config-plugin:jsx-a11y/recommended
+    "plugin:prettier/recommended",
+    "plugin:jest/recommended"
+  ],
+  "root": true,
+  "env": {
+    "node": true,
+    "jest": true,
+    "es6": true,
+    "es2021": true
+  },
+  "ignorePatterns": [".eslintrc"],
+  "rules": {
+    "no-plusplus": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "func-names": "off",
+    "react/display-name": "off",
+    "linebreak-style": "off",
+    "unicorn/prevent-abbreviations": "off",
+    "no-debugger": "off",
+    "no-console": 0,
+    "function-paren-newline": "off",
+    "no-confusing-arrow": "off",
+    "global-require": "off",
+    "no-shadow": "off",
+    "implicit-arrow-linebreak": "off",
+    "import/extensions": "off",
+    "jsx-a11y/anchor-is-valid": "off",
+    "object-curly-newline": "off",
+    "operator-linebreak": "off",
+    "import/prefer-default-export": "off",
+    "@typescript-eslint/interface-name-prefix": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "prettier/prettier": ["error", {
+      "endOfLine":"auto"
+    }],
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": ["test/**"],
+        "optionalDependencies": false,
+        "peerDependencies": false
+      }
+    ],
+    "quotes": [
+      2,
+      "single",
+      {
+          "avoidEscape": true
+      }
+    ]
+  }
+}
