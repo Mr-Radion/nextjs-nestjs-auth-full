@@ -1,0 +1,6 @@
+node_modules
+*.css
+.next
+.babelrc
+next.config.js
+out
