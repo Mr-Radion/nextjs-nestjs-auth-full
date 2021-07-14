@@ -2,11 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
 // import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { MyLogger } from './config';
 
 async function bootstrap() {
   try {
     const PORT = process.env.PORT || 5000;
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, {
+      // httpsOptions,
+      logger: new MyLogger(),
+      cors: true,
+    });
     app.enableCors();
     app.setGlobalPrefix('api');
     app.use(cookieParser());

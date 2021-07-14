@@ -3,6 +3,7 @@ import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { getMetadataArgsStorage, createConnection } from 'typeorm';
 
 import config from '../../config.orm';
+// import { logger } from '../../common'
 
 @Injectable()
 export class TypeormService implements TypeOrmOptionsFactory {
