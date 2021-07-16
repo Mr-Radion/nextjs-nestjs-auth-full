@@ -7,11 +7,14 @@ import { MyLogger } from './config';
 async function bootstrap() {
   try {
     const PORT = process.env.PORT || 5000;
-    const app = await NestFactory.create(AppModule, {
-      // httpsOptions,
-      logger: new MyLogger(),
-      cors: true,
-    });
+    const app = await NestFactory.create(
+      AppModule,
+      //   {
+      //   // httpsOptions,
+      //   logger: new MyLogger(),
+      //   cors: true,
+      // }
+    );
     app.enableCors();
     app.setGlobalPrefix('api');
     app.use(cookieParser());

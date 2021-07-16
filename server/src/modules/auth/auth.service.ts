@@ -1,19 +1,20 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-// import { InjectModel } from '@nestjs/mongoose';
-// import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { User, UserDocument } from '../users/schemas';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserEntity } from '../users/user.entity';
+import { getMongoRepository } from 'typeorm';
 import { UserDto } from '../users/dto';
-// import { RefreshTokenSessions, RefreshTokenSessionsDocument } from './schemas';
+import { RefreshTokenSessionsEntity } from './refresh.token.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
-    // @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    // @InjectModel(RefreshTokenSessions.name)
-    // private readonly tokenModel: Model<RefreshTokenSessionsDocument>,
+    @InjectRepository(UserEntity) private readonly userModel: Repository<UserEntity>,
+    @InjectRepository(RefreshTokenSessionsEntity)
+    private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
     private jwtService: JwtService,
   ) {}
 
@@ -37,7 +38,7 @@ export class AuthService {
   }
 
   async activateAccount(activationLink: string): Promise<void> {
-    const user = await this.userModel.findOne({ activationLink });
+    const user = await getMongoRepository(UserEntity).findOne({ activationLink });
     if (!user) {
       throw new HttpException(`Некорректная ссылка активации`, HttpStatus.BAD_REQUEST);
     }
@@ -53,7 +54,7 @@ export class AuthService {
       throw new UnauthorizedException({
         message: 'Рефреш токен неверный или пользователь не авторизован',
       });
-    const user = await this.userModel.findById(userData.id);
+    const user = await this.userModel.findOne(userData.id);
     if (user.banned)
       throw new UnauthorizedException({
         message: `Вы забанены ${user.banReason}`,
@@ -77,7 +78,8 @@ export class AuthService {
   }
 
   async getUserByEmail(email: string) {
-    const user = await this.userModel.findOne({ email }).populate('roles').lean();
+    const user = await this.userModel.findOne({ email });
+    // .populate('roles').lean();
     console.log(user, 80);
     return user;
   }
@@ -96,20 +98,20 @@ export class AuthService {
   }
 
   async saveToken(userId, refreshToken: string) {
-    const tokenData = await this.tokenModel.findOneAndUpdate(
+    const tokenData = await this.tokenModel.update(
       { userId: userId },
-      { $set: { refreshToken } },
-      { new: true },
+      { refreshToken },
+      // { new: true },
     );
     if (!tokenData) {
-      const createdToken = await this.tokenModel.create({ userId, refreshToken });
+      const createdToken = this.tokenModel.create({ userId, refreshToken });
       return createdToken;
     }
     return tokenData;
   }
 
   async removeToken(refreshToken: string) {
-    const tokenData = await this.tokenModel.updateOne({ refreshToken }, { refreshToken: null });
+    const tokenData = await this.tokenModel.update({ refreshToken }, { refreshToken: null });
     return tokenData;
   }
 

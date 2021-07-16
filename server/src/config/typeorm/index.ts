@@ -8,14 +8,24 @@ import config from '../../config.orm';
 @Injectable()
 export class TypeormService implements TypeOrmOptionsFactory {
   async createTypeOrmOptions(): Promise<TypeOrmModuleOptions> {
+    console.log(...config);
     const options = {
       ...config,
-      type: 'mongodb',
-      entities: getMetadataArgsStorage().tables.map(tbl => tbl.target),
+      type: 'postgres',
+      // entities: getMetadataArgsStorage().tables.map(tbl => tbl.target),
+      entities: [__dirname + '../../modules/**/*.entity{.ts,.js}'],
+      // migrations: ['src/modules/**/migration/*.ts'],
+      // subscribers: ['src/modules/**/subscriber/*.ts'],
+      // cli: {
+      // 	entitiesDir: 'src/modules/**/entity',
+      // 	migrationsDir: 'src/modules/**/migration',
+      // 	subscribersDir: 'src/modules/**/subscriber'
+      // },
       synchronize: true,
-      useNewUrlParser: true,
       useUnifiedTopology: true,
+      autoLoadEntities: true, // entities will be loaded automatically
       keepConnectionAlive: true,
+      retryDelay: 3000, // Delay between connection retry attempts (ms) (default: 3000)
       logging: true,
     };
     createConnection(options)

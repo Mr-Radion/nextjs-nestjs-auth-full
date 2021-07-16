@@ -1,19 +1,19 @@
 import { Body, Controller, Post, Get, Param, Redirect, Res, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+// import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Cookies } from 'src/lib/custom-decorators/cookies';
 import { Roles } from 'src/lib/custom-decorators/roles-auth';
 import { CreateUserDto } from '../users/dto';
 import { AuthService } from './auth.service';
 import { RolesGuard } from './roles.guard';
-import { RefreshTokenSessions } from './schemas';
+import { RefreshTokenSessionsEntity } from './refresh.token.entity';
 
-@ApiTags('Авторизация')
+// @ApiTags('Авторизация')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @ApiOperation({ summary: 'Вход в аккаунт' })
-  @ApiResponse({ status: 200, type: [RefreshTokenSessions] })
+  // @ApiOperation({ summary: 'Вход в аккаунт' })
+  // @ApiResponse({ status: 200, type: [RefreshTokenSessionsEntity] })
   @Post('/login')
   async login(@Body() dto: CreateUserDto, @Res({ passthrough: true }) response: any) {
     try {
@@ -29,8 +29,8 @@ export class AuthController {
     }
   }
 
-  @ApiOperation({ summary: 'Ссылка для подтверждения почты и активации аккаунта' })
-  @ApiResponse({ status: 200, type: '25d92822-8673-4008-90af-4f5e19165f24' })
+  // @ApiOperation({ summary: 'Ссылка для подтверждения почты и активации аккаунта' })
+  // @ApiResponse({ status: 200, type: '25d92822-8673-4008-90af-4f5e19165f24' })
   @Get('/activate/:link')
   @Redirect(process.env.CLIENT_URL, 302)
   activate(@Param('link') activationLink: string) {
@@ -41,8 +41,8 @@ export class AuthController {
     }
   }
 
-  @ApiOperation({ summary: 'Обновление токена' })
-  @ApiResponse({ status: 200, type: [RefreshTokenSessions] })
+  // @ApiOperation({ summary: 'Обновление токена' })
+  // @ApiResponse({ status: 200, type: [RefreshTokenSessionsEntity] })
   @Post('/refresh')
   async refresh(@Cookies('fcd') refreshtoken: string, @Res({ passthrough: true }) response: any) {
     try {
@@ -58,8 +58,8 @@ export class AuthController {
     }
   }
 
-  @ApiOperation({ summary: 'Выход из приложения' })
-  @ApiResponse({ status: 200 })
+  // @ApiOperation({ summary: 'Выход из приложения' })
+  // @ApiResponse({ status: 200 })
   @Post('/logout')
   async logout(@Cookies('fcd') refreshtoken: string, @Res({ passthrough: true }) response: any) {
     try {

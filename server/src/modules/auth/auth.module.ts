@@ -1,10 +1,11 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
-import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
-// import { User, UserSchema } from '../users/schemas';
-// import { RefreshTokenSessions, RefreshTokenSessionsSchema } from './schemas';
+import { UserEntity } from '../users/user.entity';
+import { RefreshTokenSessionsEntity } from './refresh.token.entity';
 
 @Module({
   controllers: [AuthController],
@@ -17,10 +18,7 @@ import { AuthController } from './auth.controller';
         expiresIn: '30m',
       },
     }),
-    // MongooseModule.forFeature([
-    //   { name: User.name, schema: UserSchema },
-    //   { name: RefreshTokenSessions.name, schema: RefreshTokenSessionsSchema },
-    // ]),
+    TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity]),
   ],
   exports: [AuthService, JwtModule],
 })
