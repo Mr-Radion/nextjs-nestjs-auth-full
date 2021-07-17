@@ -1,6 +1,6 @@
-import { Entity, ObjectIdColumn, Column } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, JoinTable, ManyToOne } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { UserEntity } from '../users/user.entity';
+import { UserEntity } from 'src/modules/users/entity';
 
 @Entity({
   name: 'tokens',
@@ -10,15 +10,16 @@ import { UserEntity } from '../users/user.entity';
 })
 
 export class RefreshTokenSessionsEntity {
-  // @PrimaryGeneratedColumn()
+  // @ObjectIdColumn()
+  // _id: string;
+
   // @PrimaryGeneratedColumn("uuid")
-  // id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @ObjectIdColumn()
-  _id: string;
-
-  @Column()
-  userId: UserEntity;
+  @ManyToOne(() => UserEntity)
+  @JoinTable()
+  user: UserEntity;
 
   @Column()
   refreshToken: string;
@@ -38,7 +39,7 @@ export class RefreshTokenSessionsEntity {
   constructor(partial: Partial<RefreshTokenSessionsEntity>) {
     if (partial) {
       Object.assign(this, partial);
-      this._id = this._id || uuidv4();
+      // this.id = this.id || uuidv4();
       this.createdAt = this.createdAt || +new Date();
       this.updatedAt = +new Date();
     }

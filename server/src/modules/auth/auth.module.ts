@@ -4,8 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
-import { UserEntity } from '../users/user.entity';
-import { RefreshTokenSessionsEntity } from './refresh.token.entity';
+import { UserEntity } from '../users/entity';
+import { RefreshTokenSessionsEntity } from './entity';
 
 @Module({
   controllers: [AuthController],

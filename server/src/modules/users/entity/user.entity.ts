@@ -1,7 +1,7 @@
-import { Entity, ObjectIdColumn, Column, ManyToMany, BaseEntity, JoinTable } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { Entity, ObjectIdColumn, Column, ManyToMany, BaseEntity, JoinTable, PrimaryGeneratedColumn } from 'typeorm';
+// import { v4 as uuidv4 } from 'uuid';
 import { Exclude, plainToClass } from 'class-transformer';
-import { RoleEntity, UserRolesEntity } from '../roles/entity';
+import { RoleEntity, UserRolesEntity } from '../../roles/entity';
 // import { ApiModelProperty } from '@nestjs/swagger';
 // import { Position } from '../../modules/deals/entity/position.entity';
 
@@ -12,11 +12,11 @@ import { RoleEntity, UserRolesEntity } from '../roles/entity';
   },
 })
 export class UserEntity extends BaseEntity {
-  @ObjectIdColumn({ unique: true })
-  _id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column()
-  userName: { nickname: string; firstName: string; lastName: string };
+  // @Column() // объект в postgres не поддерживается
+  // userName: { nickname: string; firstName: string; lastName: string };
 
   @Column({ unique: true })
   email: string;
@@ -59,7 +59,7 @@ export class UserEntity extends BaseEntity {
     if (partial) {
       Object.assign(this, partial);
       // default values
-      this._id = this._id || uuidv4();
+      // this.id = this.id || uuidv4();
       this.isActivated = this.isActivated || false;
       this.createdAt = this.createdAt || +new Date();
       this.updatedAt = +new Date();

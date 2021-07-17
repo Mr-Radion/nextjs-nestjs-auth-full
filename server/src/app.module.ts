@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TypeormService } from './config';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { MailModule } from './modules/mail/mail.module';
@@ -14,9 +13,16 @@ import { MailModule } from './modules/mail/mail.module';
       envFilePath: `.${process.env.NODE_ENV}.env`,
     }),
     TypeOrmModule.forRootAsync({
-      useClass: TypeormService,
-      imports: [ConfigModule],
-      // useExisting: TypeormService,
+      useFactory: () => ({
+        type: 'postgres',
+        host: process.env.POSTGRES_HOST,
+        port: Number(process.env.POSTGRES_PORT),
+        username: process.env.POSTGRES_USER,
+        password: process.env.POSTGRES_PASSWORD,
+        database: process.env.POSTGRES_DB,
+        entities: [__dirname + '/modules/**/entity/*.entity{.ts,.js}'],
+        synchronize: true, // helps to automatically load tables into the database
+      }),
     }),
     UsersModule,
     RolesModule,

@@ -14,7 +14,7 @@ import {
   UserDto,
   UserQueryDto,
 } from './dto';
-import { UserEntity } from './user.entity';
+import { UserEntity } from './entity';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '../mail/mail.service';
 // import { Role } from '../roles/schemas';
@@ -66,13 +66,13 @@ export class UsersService {
   }
 
   async getOneUser(id: string): Promise<UserEntity | undefined> {
-    return this.userModel.findOne({ _id: id });
+    return this.userModel.findOneOrFail(id);
   }
 
   async getMeAccount(token: string) {
     const tokenCode = token.split(' ')[1];
     const user = this.jwtService.verify(tokenCode);
-    return this.userModel.findOne({ email: user.email });
+    return this.userModel.findOneOrFail({ email: user.email });
   }
 
   async deleteUserOne(id: string) {

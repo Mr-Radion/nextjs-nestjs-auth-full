@@ -1,4 +1,4 @@
-import { Entity, ObjectIdColumn, Column, BaseEntity } from 'typeorm';
+import { Entity, Column, BaseEntity, PrimaryGeneratedColumn } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
 @Entity({
@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 })
 
 export class RoleEntity extends BaseEntity {
-  @ObjectIdColumn()
-  _id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
   value: string;
@@ -28,7 +28,7 @@ export class RoleEntity extends BaseEntity {
     super();
     if (partial) {
       Object.assign(this, partial);
-      this._id = this._id || uuidv4();
+      // this.id = this.id || uuidv4();
       this.createdAt = this.createdAt || +new Date();
       this.updatedAt = +new Date();
     }

@@ -4,10 +4,10 @@ import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserEntity } from '../users/user.entity';
+import { UserEntity } from '../users/entity';
 import { getMongoRepository } from 'typeorm';
 import { UserDto } from '../users/dto';
-import { RefreshTokenSessionsEntity } from './refresh.token.entity';
+import { RefreshTokenSessionsEntity } from './entity';
 
 @Injectable()
 export class AuthService {
@@ -99,12 +99,12 @@ export class AuthService {
 
   async saveToken(userId, refreshToken: string) {
     const tokenData = await this.tokenModel.update(
-      { userId: userId },
+      { user: userId },
       { refreshToken },
       // { new: true },
     );
     if (!tokenData) {
-      const createdToken = this.tokenModel.create({ userId, refreshToken });
+      const createdToken = this.tokenModel.create({ user: userId, refreshToken });
       return createdToken;
     }
     return tokenData;

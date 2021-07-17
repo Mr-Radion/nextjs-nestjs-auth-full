@@ -28,7 +28,7 @@ import {
   // UserDto,
 } from './dto';
 import { UsersService } from './users.service';
-import { UserEntity } from './user.entity';
+import { UserEntity } from './entity/user.entity';
 // import { ValidationPipe } from 'src/lib/pipes/validation.pipe';
 
 // @ApiTags('Пользователи')

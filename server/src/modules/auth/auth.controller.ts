@@ -5,7 +5,7 @@ import { Roles } from 'src/lib/custom-decorators/roles-auth';
 import { CreateUserDto } from '../users/dto';
 import { AuthService } from './auth.service';
 import { RolesGuard } from './roles.guard';
-import { RefreshTokenSessionsEntity } from './refresh.token.entity';
+import { RefreshTokenSessionsEntity } from './entity/refresh.token.entity';
 
 // @ApiTags('Авторизация')
 @Controller('auth')

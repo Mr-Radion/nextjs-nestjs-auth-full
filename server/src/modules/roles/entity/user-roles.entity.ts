@@ -1,5 +1,5 @@
-import { Entity, ObjectIdColumn, Column } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+// import { v4 as uuidv4 } from 'uuid';
 
 @Entity({
   name: 'user-roles',
@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
   },
 })
 export class UserRolesEntity {
-  @ObjectIdColumn()
-  _id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
   roleId: number;
@@ -26,7 +26,7 @@ export class UserRolesEntity {
   constructor(partial: Partial<UserRolesEntity>) {
     if (partial) {
       Object.assign(this, partial);
-      this._id = this._id || uuidv4();
+      // this.id = this.id || uuidv4();
       this.createdAt = this.createdAt || +new Date();
       this.updatedAt = +new Date();
     }
