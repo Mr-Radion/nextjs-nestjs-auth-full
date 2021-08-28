@@ -80,7 +80,7 @@ export class AuthService {
   async getUserByEmail(email: string) {
     const user = await this.userModel.findOne({ email });
     // .populate('roles').lean();
-    console.log(user, 80);
+    // console.log(user, 'auth', 80);
     return user;
   }
 

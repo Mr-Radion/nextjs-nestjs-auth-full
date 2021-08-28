@@ -1,27 +1,47 @@
-import { Entity, ObjectIdColumn, Column, ManyToMany, BaseEntity, JoinTable, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  BaseEntity,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 // import { v4 as uuidv4 } from 'uuid';
-import { Exclude, plainToClass } from 'class-transformer';
-import { RoleEntity, UserRolesEntity } from '../../roles/entity';
+// import { Exclude, plainToClass } from 'class-transformer';
+import { UserRolesEntity } from '../../roles/entity';
 // import { ApiModelProperty } from '@nestjs/swagger';
 // import { Position } from '../../modules/deals/entity/position.entity';
 
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  USER = 'USER',
+}
+
 @Entity({
   name: 'users',
-  orderBy: {
-    createdAt: 'ASC',
-  },
+  // orderBy: {
+  //   createdAt: 'ASC',
+  // },
 })
 export class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // @Column() // объект в postgres не поддерживается
-  // userName: { nickname: string; firstName: string; lastName: string };
+  @Column({ type: 'text', unique: true, nullable: true })
+  nickname: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'text', nullable: true })
+  firstName: string;
+
+  @Column({ type: 'text', nullable: true })
+  lastName: string;
+
+  @Column({ type: 'text', unique: true })
   email: string;
 
-  @Exclude()
+  // @Exclude()
   @Column()
   password: string;
 
@@ -29,40 +49,56 @@ export class UserEntity extends BaseEntity {
   // @Column()
   // searchIn: Position;
 
-  @Column()
+  @Column({ default: false })
   isActivated: boolean;
+
+  @Column({ default: false })
+  gender: string;
 
   @Column()
   activationLink: string;
 
-  @Column()
+  @Column({ default: false })
   banned: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   banReason: string;
 
-  // @ManyToMany(type => RoleEntity, UserRolesEntity => UserRolesEntity._id)
-  // roles: RoleEntity[];
+  @CreateDateColumn({ name: 'creation_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP(6)' })
+  public created_at: Date;
 
-  @ManyToMany(() => RoleEntity)
-  @JoinTable()
-  roles: RoleEntity[];
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updated_at: Date;
 
-  @Column()
-  createdAt: number;
+  // @CreateDateColumn({
+  //   name: 'creation_at',
+  //   type: 'timestamptz',
+  //   default: () => 'CURRENT_TIMESTAMP',
+  // })
+  // creationAt: Date;
+  
+  // @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  // updatedAt: Date;
 
-  @Column()
-  updatedAt: number;
+  // @ManyToOne(() => UserEntity, (user: UserEntity) => user.posts)
 
-  constructor(partial: Partial<UserEntity>) {
-    super();
-    if (partial) {
-      Object.assign(this, partial);
-      // default values
-      // this.id = this.id || uuidv4();
-      this.isActivated = this.isActivated || false;
-      this.createdAt = this.createdAt || +new Date();
-      this.updatedAt = +new Date();
-    }
-  }
+  @OneToMany(() => UserRolesEntity, (userRolesEntity: UserRolesEntity) => userRolesEntity.user)
+  public userRolesEntity!: UserRolesEntity[];
+
+  // @Column({ nullable: true })
+  // public roles: string;
+
+  // constructor(partial: Partial<UserEntity>) {
+  //   super();
+  //   if (partial) {
+  //     Object.assign(this, partial);
+  //     default values
+  //     this.id = this.id || uuidv4();
+  //   }
+  // }
 }

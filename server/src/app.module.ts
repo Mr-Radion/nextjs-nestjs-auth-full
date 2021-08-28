@@ -21,7 +21,9 @@ import { MailModule } from './modules/mail/mail.module';
         password: process.env.POSTGRES_PASSWORD,
         database: process.env.POSTGRES_DB,
         entities: [__dirname + '/modules/**/entity/*.entity{.ts,.js}'],
-        synchronize: true, // helps to automatically load tables into the database
+        // entities: [User],
+        // autoLoadEntities: true,
+        synchronize: true,
       }),
     }),
     UsersModule,

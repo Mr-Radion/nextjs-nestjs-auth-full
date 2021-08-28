@@ -38,9 +38,9 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение всех пользователей' })
   // @ApiResponse({ status: 200, type: [UserEntity] })
-  @UseGuards(JwtAutGuard)
-  @Roles('ADMIN', 'MANAGER')
-  @UseGuards(RolesGuard)
+  // @UseGuards(JwtAutGuard)
+  // @Roles('ADMIN', 'MANAGER')
+  // @UseGuards(RolesGuard)
   @Get()
   getAll(@Query() query: UserQueryDto) {
     try {

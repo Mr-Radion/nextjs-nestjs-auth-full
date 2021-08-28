@@ -15,6 +15,7 @@ import {
   UserQueryDto,
 } from './dto';
 import { UserEntity } from './entity';
+import { UserRolesEntity } from '../roles/entity';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '../mail/mail.service';
 // import { Role } from '../roles/schemas';
@@ -24,6 +25,7 @@ import { MailService } from '../mail/mail.service';
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity) private readonly userModel: Repository<UserEntity>,
+    @InjectRepository(UserRolesEntity) private readonly userRolesModel: Repository<UserRolesEntity>,
     private authService: AuthService,
     private roleService: RoleService,
     private jwtService: JwtService,
@@ -41,12 +43,19 @@ export class UsersService {
     const hashPassword = await bcrypt.hash(dto.password, 5);
     const activationLink = uuidv4();
     const roleId = await this.roleService.getRoleByValue('USER');
-    const createdUser = await this.userModel.save({
-      ...dto,
-      password: hashPassword,
-      activationLink,
-      roles: [roleId],
-    });
+
+    let createdUser = new UserEntity();
+    // createdUser = { ...dto };
+    createdUser.email = dto.email;
+    createdUser.password = hashPassword;
+    createdUser.activationLink = activationLink;
+    const user = await createdUser.save();
+
+    let commonUsRol = new UserRolesEntity();
+    commonUsRol.roleId = roleId.id;
+    commonUsRol.userId = user.id;
+    await commonUsRol.save();
+
     await this.mailService.sendActivationMail(
       dto.email,
       `${process.env.API_URL}/api/auth/activate/${activationLink}`,

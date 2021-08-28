@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, JoinTable, ManyToOne } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from 'src/modules/users/entity';
 
 @Entity({

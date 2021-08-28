@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { RolesModule } from '../roles/roles.module';
-// import { UserRolesEntity } from '../roles/entity';
+import { UserRolesEntity } from '../roles/entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { MailModule } from '../mail/mail.module';
@@ -14,7 +14,7 @@ import { UserEntity } from './entity';
   imports: [
     TypeOrmModule.forFeature([
       UserEntity, 
-      // UserRolesEntity
+      UserRolesEntity
     ]),
     RolesModule,
     forwardRef(() => AuthModule),

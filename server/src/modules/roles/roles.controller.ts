@@ -2,10 +2,10 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 // import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoleService } from './roles.service';
 import { CreateRoleDto } from './dto';
-import { Roles } from 'src/lib/custom-decorators/roles-auth';
+// import { Roles } from 'src/lib/custom-decorators/roles-auth';
 import { JwtAutGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { RoleEntity } from './entity/roles.entity';
+// import { RolesGuard } from '../auth/roles.guard';
+// import { RoleEntity } from './entity/roles.entity';
 
 // @ApiTags('Пользователи')
 @Controller('roles')
@@ -14,9 +14,9 @@ export class RolesController {
 
   // @ApiOperation({ summary: 'Создание роли администратором' })
   // @ApiResponse({ status: 200, type: RoleEntity })
-  @UseGuards(JwtAutGuard)
-  @Roles('ADMIN')
-  @UseGuards(RolesGuard)
+  // @UseGuards(JwtAutGuard)
+  // @Roles('ADMIN')
+  // @UseGuards(RolesGuard)
   @Post()
   create(@Body() dto: CreateRoleDto) {
     try {
@@ -28,7 +28,7 @@ export class RolesController {
 
   // @ApiOperation({ summary: 'Посмотреть описание роли' })
   // @ApiResponse({ status: 200, type: RoleEntity })
-  @UseGuards(JwtAutGuard)
+  // @UseGuards(JwtAutGuard)
   @Get('/:value')
   getByValue(@Param('value') value: string) {
     return this.roleService.getRoleByValue(value);

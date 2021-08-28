@@ -1,34 +1,57 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+  BaseEntity,
+} from 'typeorm';
+import { RoleEntity } from './';
+import { UserEntity } from 'src/modules/users/entity';
 // import { v4 as uuidv4 } from 'uuid';
 
 @Entity({
   name: 'user-roles',
-  orderBy: {
-    createdAt: 'ASC',
-  },
+  // orderBy: {
+  //   createdAt: 'ASC',
+  // },
 })
-export class UserRolesEntity {
+export class UserRolesEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  public id?: number;
 
   @Column()
-  roleId: number;
+  public roleId: number;
 
   @Column()
-  userId: number;
+  public userId: number;
 
-  @Column()
-  createdAt: number;
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP(6)' })
+  public created_at?: Date;
 
-  @Column()
-  updatedAt: number;
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updated_at?: Date;
 
-  constructor(partial: Partial<UserRolesEntity>) {
-    if (partial) {
-      Object.assign(this, partial);
-      // this.id = this.id || uuidv4();
-      this.createdAt = this.createdAt || +new Date();
-      this.updatedAt = +new Date();
-    }
-  }
+  @ManyToOne(() => RoleEntity, role => role.userRolesEntity)
+  @JoinColumn({ name: 'roleId' })
+  public role?: RoleEntity;
+
+  @ManyToOne(() => UserEntity, user => user.userRolesEntity)
+  @JoinColumn({ name: 'userId' })
+  public user?: UserEntity;
+
+  // constructor(partial: Partial<UserRolesEntity>) {
+  //   if (partial) {
+  //     Object.assign(this, partial);
+  //     // this.id = this.id || uuidv4();
+  //     this.createdAt = this.createdAt || +new Date();
+  //     this.updatedAt = +new Date();
+  //   }
+  // }
 }
