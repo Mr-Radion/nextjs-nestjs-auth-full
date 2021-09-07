@@ -1,8 +1,8 @@
 {
-  "presets": [
-      "next/babel",
-      "@babel/preset-typescript"
+  "presets": ["next/babel", "@babel/preset-typescript"],
+  "plugins": [
+    "@babel/plugin-proposal-do-expressions",
+    ["@babel/plugin-proposal-class-properties", { "loose": false }]
   ],
-  "plugins": ["@babel/plugin-proposal-do-expressions"],
   "exclude": ["/node_modules/", "./next.config.js"]
 }
