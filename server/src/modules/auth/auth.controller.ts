@@ -17,7 +17,7 @@ export class AuthController {
   @Post('/login')
   async login(@Body() dto: CreateUserDto, @Res({ passthrough: true }) response: any) {
     try {
-      console.log(dto, 'auth', 20)
+      console.log(dto, 'auth', 20);
       const userData = await this.authService.login(dto);
       response.cookie('token', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
@@ -34,9 +34,12 @@ export class AuthController {
   // @ApiResponse({ status: 200, type: '25d92822-8673-4008-90af-4f5e19165f24' })
   @Get('/activate/:link')
   @Redirect(process.env.CLIENT_URL, 302)
-  activate(@Param('link') activationLink: string) {
+  async activate(@Param('link') activationLink: string) {
     try {
-      return this.authService.activateAccount(activationLink);
+      const authLink = await this.authService.activateAccount(activationLink);
+      if (authLink.isActivated) {
+        return { url: 'http://localhost:3000' };
+      }
     } catch (error) {
       console.log(error);
     }
@@ -51,7 +54,7 @@ export class AuthController {
       response.cookie('token', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',  // управляют видимостью cookie в браузере
+        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
       });
       return userData;
     } catch (error) {

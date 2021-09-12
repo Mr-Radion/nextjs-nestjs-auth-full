@@ -37,13 +37,14 @@ export class AuthService {
     return token;
   }
 
-  async activateAccount(activationLink: string): Promise<void> {
+  async activateAccount(activationLink: string): Promise<any> {
     const user = await this.userModel.findOne({ activationLink: activationLink });
     if (!user) {
       throw new HttpException(`Некорректная ссылка активации`, HttpStatus.BAD_REQUEST);
     }
     user.isActivated = true;
     await user.save();
+    return user;
   }
 
   async refreshToken(refreshtoken: string) {
