@@ -67,7 +67,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение пользователя по токену' })
   // @ApiResponse({ status: 200, type: UserEntity })
-  @UseGuards(JwtAutGuard)
+  // @UseGuards(JwtAutGuard)
   @Get('/getme')
   getMe(@Req() req: Request) {
     try {
@@ -83,6 +83,7 @@ export class UsersController {
   @Post()
   async create(@Body() userDto: CreateUserDto, @Res({ passthrough: true }) response: any) {
     try {
+      console.log(userDto)
       const userData = await this.userService.createUser(userDto);
       response.cookie('fcd', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
@@ -97,9 +98,9 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Удаление пользователя' })
   // @ApiResponse({ status: 200 })
-  @UseGuards(JwtAutGuard)
-  @Roles('ADMIN')
-  @UseGuards(RolesGuard)
+  // @UseGuards(JwtAutGuard)
+  // @Roles('ADMIN')
+  // @UseGuards(RolesGuard)
   @Delete('remove/:id')
   removeUserOne(@Param('id') id: string) {
     try {

@@ -17,8 +17,9 @@ export class AuthController {
   @Post('/login')
   async login(@Body() dto: CreateUserDto, @Res({ passthrough: true }) response: any) {
     try {
+      console.log(dto, 'auth', 20)
       const userData = await this.authService.login(dto);
-      response.cookie('fcd', userData.refreshToken, {
+      response.cookie('token', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
@@ -44,13 +45,13 @@ export class AuthController {
   // @ApiOperation({ summary: 'Обновление токена' })
   // @ApiResponse({ status: 200, type: [RefreshTokenSessionsEntity] })
   @Post('/refresh')
-  async refresh(@Cookies('fcd') refreshtoken: string, @Res({ passthrough: true }) response: any) {
+  async refresh(@Cookies('token') refreshtoken: string, @Res({ passthrough: true }) response: any) {
     try {
       const userData = await this.authService.refreshToken(refreshtoken);
-      response.cookie('fcd', userData.refreshToken, {
+      response.cookie('token', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
+        secure: process.env.NODE_ENV !== 'development',  // управляют видимостью cookie в браузере
       });
       return userData;
     } catch (error) {
@@ -61,10 +62,10 @@ export class AuthController {
   // @ApiOperation({ summary: 'Выход из приложения' })
   // @ApiResponse({ status: 200 })
   @Post('/logout')
-  async logout(@Cookies('fcd') refreshtoken: string, @Res({ passthrough: true }) response: any) {
+  async logout(@Cookies('token') refreshtoken: string, @Res({ passthrough: true }) response: any) {
     try {
       const token = await this.authService.logout(refreshtoken);
-      response.clearCookie('fcd');
+      response.clearCookie('token');
       return token;
     } catch (error) {
       console.log(error);

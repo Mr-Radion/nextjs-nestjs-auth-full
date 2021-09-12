@@ -34,6 +34,7 @@ export class UsersService {
 
   async createUser(dto: CreateUserDto): Promise<any & UserDto> {
     const candidate = await this.authService.getUserByEmail(dto.email);
+    console.log(dto)
     if (candidate) {
       throw new HttpException(
         `Пользователь с почтовым адресом ${dto.email} уже существует`,

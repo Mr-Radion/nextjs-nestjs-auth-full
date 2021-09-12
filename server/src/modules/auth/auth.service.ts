@@ -5,7 +5,7 @@ import * as jwt from 'jsonwebtoken';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../users/entity';
-import { getMongoRepository } from 'typeorm';
+// import { getMongoRepository } from 'typeorm';
 import { UserDto } from '../users/dto';
 import { RefreshTokenSessionsEntity } from './entity';
 
@@ -38,7 +38,7 @@ export class AuthService {
   }
 
   async activateAccount(activationLink: string): Promise<void> {
-    const user = await getMongoRepository(UserEntity).findOne({ activationLink });
+    const user = await this.userModel.findOne({ activationLink: activationLink });
     if (!user) {
       throw new HttpException(`Некорректная ссылка активации`, HttpStatus.BAD_REQUEST);
     }
@@ -117,6 +117,7 @@ export class AuthService {
 
   private async validateUser(userData: any): Promise<any> {
     try {
+      console.log(userData, 'auth-service', 121);
       const user = await this.getUserByEmail(userData.email);
       if (!user)
         throw new UnauthorizedException({

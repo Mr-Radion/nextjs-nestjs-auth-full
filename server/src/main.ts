@@ -8,9 +8,11 @@ async function bootstrap() {
     const PORT = process.env.PORT || 5000;
     const app = await NestFactory.create(AppModule, {
       // httpsOptions,
-      cors: true,
+      cors: {
+        credentials: true,
+        origin: process.env.CLIENT_URL,
+      },
     });
-    app.enableCors();
     app.setGlobalPrefix('api');
     app.use(cookieParser());
     // const config = new DocumentBuilder().setTitle('API').setVersion('1.0.0').build(); // openapi info

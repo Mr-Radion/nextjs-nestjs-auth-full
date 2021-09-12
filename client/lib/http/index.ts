@@ -11,11 +11,12 @@ const $api = axios.create({
 
 // при каждом запросе на сервер мы вытаскиваем текущий access токен сохраненный в куки и отправляем на сервер для аутенфикации
 $api.interceptors.request.use(config => {
+  // config.withCredentials = true;
   config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
   return config;
 });
 
-// при ответе от сервера со статусом ошибки 401, означающий, что access токен устарен 
+// при ответе от сервера со статусом ошибки 401, означающий, что access токен устарен
 // мы отправляем дополнительный запрос для получения новой пары refresh и access токена с обновленным сроком жизни и сохраняем его в куках
 // снова повторяем исходный запрос, но уже с обновленным токеном
 $api.interceptors.response.use(
@@ -27,7 +28,7 @@ $api.interceptors.response.use(
     if (error.response.status == 401 && error.config && !error.config._isRetry) {
       originalRequest._isRetry = true;
       try {
-        const response = await axios.get<AuthResponse>(`${API_URL}/refresh`, {
+        const response = await axios.get<AuthResponse>(`${API_URL}/auth/refresh`, {
           withCredentials: true,
         });
         localStorage.setItem('token', response.data.accessToken);
