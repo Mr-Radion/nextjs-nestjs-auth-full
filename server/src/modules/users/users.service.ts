@@ -163,35 +163,22 @@ export class UsersService {
     return userRoleUpdate;
   }
 
-  // РЕФАКТОРИНГ pipe id
-  //   async removeRoleUser(query: RoleQueryDto) {
-  //     if (!query.userId) throw new HttpException('id не указан', HttpStatus.BAD_REQUEST); // перенести в pipe по id
-  //     if (!query.userId.match(/^[0-9a-fA-F]{24}$/)) {
-  //       throw new HttpException(
-  //         'id указан неверно, по причине не соответствия формату ObjectId',
-  //         HttpStatus.BAD_REQUEST,
-  //       );
-  //     }
-  //     const user = await this.userModel(UserEntity).findOne({ _id: query.userId });
-  //     const role = await this.roleService.getRoleByValue(query.value);
-  //     if (!user || !role)
-  //       throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
-  //     if (user.roles.length === 0)
-  //       throw new HttpException(
-  //         'У пользователя не осталось больше ролей для удаления',
-  //         HttpStatus.NOT_FOUND,
-  //       );
-  //     const roles = user.roles.filter((roleId: any) => roleId.toString() !== role['_id'].toString());
-  //     const deletedUserRole = await this.userModel
-  //       .findByIdAndUpdate(
-  //         query.userId,
-  //         {
-  //           roles,
-  //         },
-  //         { new: true },
-  //       )
-  //       .populate('roles')
-  //       .lean();
-  //     return deletedUserRole;
-  //   }
+  async removeRoleUser(query: RoleQueryDto) {
+    if (!query.userId) throw new HttpException('id не указан', HttpStatus.BAD_REQUEST); // перенести в pipe по id
+    const user = await this.userModel.findOne({ id: Number(query.userId) });
+    const role = await this.roleService.getRoleByValue(query.value);
+    if (!user || !role)
+      throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
+    if (user.userRolesEntity.length === 0)
+      throw new HttpException(
+        'У пользователя не осталось больше ролей для удаления',
+        HttpStatus.NOT_FOUND,
+      );
+    // удаляем конкретную роль пользователя
+    const deletedUserRole = await this.userRolesModel.delete({
+      userId: Number(query.userId),
+      roleId: role.id,
+    });
+    return deletedUserRole;
+  }
 }
