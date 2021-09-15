@@ -87,6 +87,11 @@ export class UsersService {
 
   async deleteUserOne(userId: string) {
     if (!userId) throw new Error('id не указан');
+    // удаляем связанные роли
+    await this.userRolesModel.delete({
+      userId: Number(userId),
+    });
+    // удаляем пользователя
     const deletedUser = await this.userModel.delete(userId);
     return deletedUser;
   }
