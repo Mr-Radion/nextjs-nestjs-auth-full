@@ -100,13 +100,14 @@ export class AuthService {
 
   async saveToken(userId, refreshToken: string) {
     const tokenData = await this.tokenModel.update(
-      { user: userId },
+      { userId },
       { refreshToken },
       // { new: true },
     );
     if (!tokenData) {
-      const createdToken = this.tokenModel.create({ user: userId, refreshToken });
-      return createdToken;
+      // const createdToken = new RefreshTokenSessionsEntity({ user: userId, refreshToken });
+      const createdToken = this.tokenModel.create({ userId, refreshToken });
+      return await this.tokenModel.save(createdToken);
     }
     return tokenData;
   }

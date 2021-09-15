@@ -7,15 +7,13 @@ import { UsersService } from './users.service';
 import { MailModule } from '../mail/mail.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entity';
+import { RefreshTokenSessionsEntity } from '../auth/entity';
 
 @Module({
   controllers: [UsersController],
   providers: [UsersService],
   imports: [
-    TypeOrmModule.forFeature([
-      UserEntity, 
-      UserRolesEntity
-    ]),
+    TypeOrmModule.forFeature([UserEntity, UserRolesEntity, RefreshTokenSessionsEntity]),
     RolesModule,
     forwardRef(() => AuthModule),
     MailModule,

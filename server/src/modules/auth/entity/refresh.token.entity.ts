@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, JoinTable, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, JoinTable, OneToOne } from 'typeorm';
 // import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from 'src/modules/users/entity';
 
@@ -8,7 +8,6 @@ import { UserEntity } from 'src/modules/users/entity';
     createdAt: 'ASC',
   },
 })
-
 export class RefreshTokenSessionsEntity {
   // @ObjectIdColumn()
   // _id: string;
@@ -17,16 +16,16 @@ export class RefreshTokenSessionsEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => UserEntity)
-  @JoinTable()
-  user: UserEntity;
+  @OneToOne(() => UserEntity, (userEntity: UserEntity) => userEntity.id)
+  @JoinTable({ name: 'userId' })
+  userId: UserEntity;
 
-  @Column()
+  @Column({ nullable: false })
   refreshToken: string;
 
   @Column()
   ip: string;
-  
+
   @Column()
   expiresIn: string;
 
