@@ -118,51 +118,50 @@ export class UsersService {
     if (!user || !role)
       throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
     // добавляем роль USER пользователю и сохраняем в бд
-    await this.userRolesModel.create({ userId: Number(userId), roleId: role.id }).save();
+    const userRoles = await this.userRolesModel
+      .create({ userId: Number(userId), roleId: role.id })
+      .save();
     // отменяем бан и стираем его причину
     user.banned = false;
     user.banReason = null;
     // сохраняем изменения в бд
-    await user.save();
-    // вытаскиваем результат вместе с информацией о добавленной роли
-    const userResult = await this.userModel.findOneOrFail(
-      { id: Number(userId) },
-      {
-        relations: ['userRolesEntity'],
-      },
-    );
-    return userResult;
+    const userResult = await user.save();
+    // // вытаскиваем результат вместе с информацией о добавленной роли
+    // const userResult = await this.userModel.findOneOrFail(
+    //   { id: Number(userId) },
+    //   {
+    //     relations: ['userRolesEntity'],
+    //   },
+    // );
+    return {
+      userResult,
+      userRoles,
+    };
   }
 
-  // РЕФАКТОРИНГ pipe id
-  // async addRoleUser(userid: string, dto: AddRoleDto) {
-  //   if (!userid.match(/^[0-9a-fA-F]{24}$/)) {
-  //     throw new HttpException(
-  //       'id указан неверно, по причине не соответствия формату ObjectId',
-  //       HttpStatus.BAD_REQUEST,
-  //     );
-  //   }
-  //   const user = await this.userModel(UserEntity).findOne({ _id: userid }).lean();
-  //   const role = await this.roleService.getRoleByValue(dto.value);
-  //   if (!user || !role)
-  //     throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
-  //   const roles = user.roles.some(item => item['_id'].toString() === role['_id'].toString());
-  //   if (user.banned)
-  //     throw new HttpException(
-  //       `Данный пользователь забанен, разблокируйте его прежде чем добавлять новые роли`,
-  //       HttpStatus.METHOD_NOT_ALLOWED,
-  //     );
-  //   if (roles)
-  //     throw new HttpException(
-  //       `роль ${dto.value} уже была добавлена данному пользователю`,
-  //       HttpStatus.METHOD_NOT_ALLOWED,
-  //     );
-  //   const userRoleUpdate = await this.userModel
-  //     .findByIdAndUpdate(userid, { roles: [...user.roles, role] }, { new: true })
-  //     .populate('roles')
-  //     .lean();
-  //   return userRoleUpdate;
-  // }
+  async addRoleUser(userId: string, dto: AddRoleDto) {
+    const user = await this.userModel.findOne({ id: Number(userId) });
+    const role = await this.roleService.getRoleByValue(dto.value);
+    if (!user || !role)
+      throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
+    if (user.banned)
+      throw new HttpException(
+        `Данный пользователь забанен, разблокируйте его прежде чем добавлять новые роли`,
+        HttpStatus.METHOD_NOT_ALLOWED,
+      );
+    // проверяем наличие данной роли у пользователя по id роли
+    const hasRole = user.userRolesEntity.some(item => item.id.toString() === role.id.toString());
+    if (hasRole)
+      throw new HttpException(
+        `роль ${dto.value} уже была добавлена данному пользователю`,
+        HttpStatus.METHOD_NOT_ALLOWED,
+      );
+    // добавляем указанную роль пользователю
+    const userRoleUpdate = await this.userRolesModel
+      .create({ userId: Number(userId), roleId: role.id })
+      .save();
+    return userRoleUpdate;
+  }
 
   // РЕФАКТОРИНГ pipe id
   //   async removeRoleUser(query: RoleQueryDto) {
