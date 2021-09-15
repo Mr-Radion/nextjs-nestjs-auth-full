@@ -92,12 +92,13 @@ export class UsersService {
   }
 
   async banUser(userId: string, dto: BanUserDto) {
-    const user = await this.userModel.findOneOrFail(userId);
+    const user = await this.userModel.findOneOrFail({ id: Number(userId) });
     if (user.banned)
       throw new HttpException(`Данный пользователь уже забанен`, HttpStatus.METHOD_NOT_ALLOWED);
-    const role = await this.roleService.getRoleByValue('BANNED');
-    if (!user || !role)
-      throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
+    // const role = await this.roleService.getRoleByValue('BANNED');
+    // if (!user || !role)
+    //   throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
+    if (!user) throw new HttpException('Пользователь не найден', HttpStatus.NOT_FOUND);
     // удаление всех ролей пользователя
     await this.userRolesModel.delete(userId);
     // баним пользователя
@@ -109,23 +110,29 @@ export class UsersService {
     return user.save();
   }
 
-  // async unlockUser(userid: string) {
-  //   const user = await this.userModel.findById({ _id: userid }).lean();
-  //   if (!user.banned)
-  //     throw new HttpException(`Данный пользователь не забанен`, HttpStatus.METHOD_NOT_ALLOWED);
-  //   const role = await this.roleService.getRoleByValue('USER');
-  //   if (!user || !role)
-  //     throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
-  //   const unlockUserRole = await this.userModel
-  //     .findByIdAndUpdate(
-  //       userid,
-  //       { roles: [role['_id']], banned: false, banReason: null },
-  //       { new: true },
-  //     )
-  //     .populate('roles')
-  //     .lean();
-  //   return unlockUserRole;
-  // }
+  async unlockUser(userId: string) {
+    const user = await this.userModel.findOneOrFail({ id: Number(userId) });
+    if (!user.banned)
+      throw new HttpException(`Данный пользователь не забанен`, HttpStatus.METHOD_NOT_ALLOWED);
+    const role = await this.roleService.getRoleByValue('USER');
+    if (!user || !role)
+      throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
+    // добавляем роль USER пользователю и сохраняем в бд
+    await this.userRolesModel.create({ userId: Number(userId), roleId: role.id }).save();
+    // отменяем бан и стираем его причину
+    user.banned = false;
+    user.banReason = null;
+    // сохраняем изменения в бд
+    await user.save();
+    // вытаскиваем результат вместе с информацией о добавленной роли
+    const userResult = await this.userModel.findOneOrFail(
+      { id: Number(userId) },
+      {
+        relations: ['userRolesEntity'],
+      },
+    );
+    return userResult;
+  }
 
   // РЕФАКТОРИНГ pipe id
   // async addRoleUser(userid: string, dto: AddRoleDto) {
