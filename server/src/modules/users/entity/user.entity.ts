@@ -38,11 +38,11 @@ export class UserEntity extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   lastName: string;
 
-  @Column({ type: 'text', unique: true })
+  @Column({ type: 'text', unique: true, nullable: false })
   email: string;
 
   // @Exclude()
-  @Column()
+  @Column({ nullable: false })
   password: string;
 
   // @ApiModelProperty({ description: 'The search location of the User' })
@@ -64,7 +64,11 @@ export class UserEntity extends BaseEntity {
   @Column({ nullable: true })
   banReason: string;
 
-  @CreateDateColumn({ name: 'creation_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP(6)' })
+  @CreateDateColumn({
+    name: 'creation_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
   public created_at: Date;
 
   @UpdateDateColumn({
@@ -81,7 +85,7 @@ export class UserEntity extends BaseEntity {
   //   default: () => 'CURRENT_TIMESTAMP',
   // })
   // creationAt: Date;
-  
+
   // @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   // updatedAt: Date;
 

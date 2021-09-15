@@ -19,13 +19,15 @@ import { UserRolesEntity } from '../roles/entity';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '../mail/mail.service';
 // import { Role } from '../roles/schemas';
-// import { RefreshTokenSessions, RefreshTokenSessionsDocument } from '../auth/schemas';
+import { RefreshTokenSessionsEntity } from '../auth/entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity) private readonly userModel: Repository<UserEntity>,
     @InjectRepository(UserRolesEntity) private readonly userRolesModel: Repository<UserRolesEntity>,
+    @InjectRepository(RefreshTokenSessionsEntity)
+    private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
     private authService: AuthService,
     private roleService: RoleService,
     private jwtService: JwtService,
@@ -34,7 +36,7 @@ export class UsersService {
 
   async createUser(dto: CreateUserDto): Promise<any & UserDto> {
     const candidate = await this.authService.getUserByEmail(dto.email);
-    console.log(dto)
+    console.log(dto);
     if (candidate) {
       throw new HttpException(
         `Пользователь с почтовым адресом ${dto.email} уже существует`,
@@ -62,17 +64,15 @@ export class UsersService {
       `${process.env.API_URL}/api/auth/activate/${activationLink}`,
     );
     const userDataAndTokens = await this.authService.tokenSession(createdUser);
+    console.log(userDataAndTokens); // надо проверить, сохраняется ли рефреш токен в бд, если нет, то почему
     return userDataAndTokens;
   }
 
   // ДОБАВИТЬ СОРТИРОВКУ В НЕСКОЛЬКИХ ВАРИАНТАХ
   async getAllUsers(query: UserQueryDto): Promise<CreateUserDto[]> {
     return this.userModel.find();
-    // .skip(Number(query.offset) ?? 0)
-    // .limit(Number(query.limit) ?? 20)
-    // .sort('-created') // по дате создания, по убыванию
-    // .lean()
-    // .exec();
+    // TODO: о сортировке, транзакциях разузнать
+    // https://coderoad.ru/61625105/%D0%9F%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%B8%D0%B9-%D1%82%D0%B8%D0%BF-%D1%81%D0%BE%D1%80%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BA%D0%B8-typeorm
   }
 
   async getOneUser(id: string): Promise<UserEntity | undefined> {
@@ -85,35 +85,29 @@ export class UsersService {
     return this.userModel.findOneOrFail({ email: user.email });
   }
 
-  async deleteUserOne(id: string) {
-    if (!id) throw new Error('id не указан');
-    const deletedUser = await this.userModel.delete(id);
+  async deleteUserOne(userId: string) {
+    if (!userId) throw new Error('id не указан');
+    const deletedUser = await this.userModel.delete(userId);
     return deletedUser;
   }
 
-  // async banUser(userid: string, dto: BanUserDto) {
-  //   const user = await this.userModel(UserEntity).findOne({ _id: userid });
-  //   if (user.banned)
-  //     throw new HttpException(`Данный пользователь уже забанен`, HttpStatus.METHOD_NOT_ALLOWED);
-  //   const role = await this.roleService.getRoleByValue('BANNED');
-  //   if (!user || !role)
-  //     throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
-  //   user.roles.splice(0, [...user.roles].length, role['_id']);
-  //   const bannedUser = await this.userModel
-  //     .findByIdAndUpdate(
-  //       userid,
-  //       {
-  //         roles: user.roles,
-  //         banned: true,
-  //         banReason: dto.banReason,
-  //       },
-  //       { new: true },
-  //     )
-  //     .populate('roles')
-  //     .lean();
-  //   await this.tokenModel.deleteOne({ userId: Object(userid) }).lean();
-  //   return bannedUser;
-  // }
+  async banUser(userId: string, dto: BanUserDto) {
+    const user = await this.userModel.findOneOrFail(userId);
+    if (user.banned)
+      throw new HttpException(`Данный пользователь уже забанен`, HttpStatus.METHOD_NOT_ALLOWED);
+    const role = await this.roleService.getRoleByValue('BANNED');
+    if (!user || !role)
+      throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
+    // удаление всех ролей пользователя
+    await this.userRolesModel.delete(userId);
+    // баним пользователя
+    user.banned = true;
+    // добавляем описание бана
+    user.banReason = dto.banReason;
+    // удаляем рефреш токен
+    await this.tokenModel.delete(userId);
+    return user.save();
+  }
 
   // async unlockUser(userid: string) {
   //   const user = await this.userModel.findById({ _id: userid }).lean();
