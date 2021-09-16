@@ -1,4 +1,15 @@
-import { Body, Controller, Post, Get, Param, Redirect, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  Redirect,
+  Res,
+  UseGuards,
+  Ip,
+  Req,
+} from '@nestjs/common';
 // import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Cookies } from 'src/lib/custom-decorators/cookies';
 import { Roles } from 'src/lib/custom-decorators/roles-auth';
@@ -15,10 +26,14 @@ export class AuthController {
   // @ApiOperation({ summary: 'Вход в аккаунт' })
   // @ApiResponse({ status: 200, type: [RefreshTokenSessionsEntity] })
   @Post('/login')
-  async login(@Body() dto: CreateUserDto, @Res({ passthrough: true }) response: any) {
+  async login(
+    @Ip() ip: any,
+    @Body() dto: CreateUserDto,
+    @Res({ passthrough: true }) response: any,
+  ) {
     try {
-      console.log(dto, 'auth', 20);
-      const userData = await this.authService.login(dto);
+      console.log(dto, 'auth', 21);
+      const userData = await this.authService.login(dto, ip);
       response.cookie('token', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,
@@ -48,9 +63,9 @@ export class AuthController {
   // @ApiOperation({ summary: 'Обновление токена' })
   // @ApiResponse({ status: 200, type: [RefreshTokenSessionsEntity] })
   @Post('/refresh')
-  async refresh(@Cookies('token') refreshtoken: string, @Res({ passthrough: true }) response: any) {
+  async refresh(@Ip() ip: any, @Cookies('token') refreshtoken: string, @Res({ passthrough: true }) response: any) {
     try {
-      const userData = await this.authService.refreshToken(refreshtoken);
+      const userData = await this.authService.refreshToken(refreshtoken, ip);
       response.cookie('token', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,

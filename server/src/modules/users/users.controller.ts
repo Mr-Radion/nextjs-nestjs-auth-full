@@ -11,6 +11,7 @@ import {
   Res,
   UseGuards,
   Req,
+  Ip,
   // UsePipes,
 } from '@nestjs/common';
 // import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -81,10 +82,10 @@ export class UsersController {
   // @ApiResponse({ status: 200, type: UserEntity })
   // @UsePipes(ValidationPipe)
   @Post()
-  async create(@Body() userDto: CreateUserDto, @Res({ passthrough: true }) response: any) {
+  async create(@Ip() ip: string, @Body() userDto: CreateUserDto, @Res({ passthrough: true }) response: any) {
     try {
-      console.log(userDto)
-      const userData = await this.userService.createUser(userDto);
+      // console.log(userDto);
+      const userData = await this.userService.createUser(userDto, ip);
       response.cookie('fcd', userData.refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,
@@ -115,54 +116,54 @@ export class UsersController {
   // @UseGuards(JwtAutGuard)
   // @Roles('ADMIN', 'MANAGER')
   // @UseGuards(RolesGuard)
-  // @Put('/ban/:userid')
-  // ban(@Param('userid') userid: string, @Body() dto: BanUserDto) {
-  //   try {
-  //     return this.userService.banUser(userid, dto);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
+  @Put('/ban/:userid')
+  ban(@Param('userid') userid: string, @Body() dto: BanUserDto) {
+    try {
+      return this.userService.banUser(userid, dto);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   // @ApiOperation({ summary: 'Разблокировать пользователя' })
   // @ApiResponse({ status: 200 })
   // @UseGuards(JwtAutGuard)
   // @Roles('ADMIN', 'MANAGER')
   // @UseGuards(RolesGuard)
-  // @Post('/ban/:userid')
-  // unlock(@Param('userid') userid: string) {
-  //   try {
-  //     return this.userService.unlockUser(userid);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
+  @Post('/ban/:userid')
+  unlock(@Param('userid') userid: string) {
+    try {
+      return this.userService.unlockUser(userid);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   // @ApiOperation({ summary: 'Добавить роль пользователю' })
   // @ApiResponse({ status: 200 })
   // @UseGuards(JwtAutGuard)
   // @Roles('ADMIN')
   // @UseGuards(RolesGuard)
-  // @Put('/role/:userid')
-  // addRole(@Param('userid') userid: string, @Body() dto: AddRoleDto) {
-  //   try {
-  //     return this.userService.addRoleUser(userid, dto);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
+  @Put('/role/:userid')
+  addRole(@Param('userid') userid: string, @Body() dto: AddRoleDto) {
+    try {
+      return this.userService.addRoleUser(userid, dto);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   // @ApiOperation({ summary: 'Удалить роль пользователю' })
   // @ApiResponse({ status: 200 })
   // @UseGuards(JwtAutGuard)
   // @Roles('ADMIN')
   // @UseGuards(RolesGuard)
-  // @Delete('/role')
-  // removeRole(@Query() query: RoleQueryDto) {
-  //   try {
-  //     return this.userService.removeRoleUser(query);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
+  @Delete('/role')
+  removeRole(@Query() query: RoleQueryDto) {
+    try {
+      return this.userService.removeRoleUser(query);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

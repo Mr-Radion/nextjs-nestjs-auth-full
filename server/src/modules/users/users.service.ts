@@ -34,7 +34,7 @@ export class UsersService {
     private mailService: MailService, // @InjectModel(RefreshTokenSessions.name) // private readonly tokenModel: Model<RefreshTokenSessionsDocument>,
   ) {}
 
-  async createUser(dto: CreateUserDto): Promise<any & UserDto> {
+  async createUser(dto: CreateUserDto, ip: string): Promise<any & UserDto> {
     const candidate = await this.authService.getUserByEmail(dto.email);
     console.log(dto);
     if (candidate) {
@@ -63,7 +63,7 @@ export class UsersService {
       dto.email,
       `${process.env.API_URL}/api/auth/activate/${activationLink}`,
     );
-    const userDataAndTokens = await this.authService.tokenSession(createdUser);
+    const userDataAndTokens = await this.authService.tokenSession(createdUser, ip);
     console.log(userDataAndTokens); // надо проверить, сохраняется ли рефреш токен в бд, если нет, то почему
     return userDataAndTokens;
   }
