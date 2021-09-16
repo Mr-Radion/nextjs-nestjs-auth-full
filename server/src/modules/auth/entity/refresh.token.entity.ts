@@ -1,4 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, JoinTable, OneToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  JoinTable,
+  OneToOne,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  BaseEntity,
+} from 'typeorm';
 // import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from 'src/modules/users/entity';
 
@@ -8,7 +18,7 @@ import { UserEntity } from 'src/modules/users/entity';
     createdAt: 'ASC',
   },
 })
-export class RefreshTokenSessionsEntity {
+export class RefreshTokenSessionsEntity extends BaseEntity {
   // @ObjectIdColumn()
   // _id: string;
 
@@ -16,31 +26,35 @@ export class RefreshTokenSessionsEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => UserEntity, (userEntity: UserEntity) => userEntity.id)
+  @ManyToOne(() => UserEntity, (userEntity: UserEntity) => userEntity.id)
   @JoinTable({ name: 'userId' })
-  userId: UserEntity;
+  user: UserEntity;
+
+  // @ManyToOne(() => UserEntity)
+  // @JoinTable()
+  // user: UserEntity;
 
   @Column({ nullable: false })
   refreshToken: string;
 
-  @Column()
+  @Column({ nullable: true })
   ip: string;
 
-  @Column()
-  expiresIn: string;
+  // @Column()
+  // expiresIn: string;
 
-  @Column()
-  createdAt: number;
+  @CreateDateColumn({
+    name: 'creation_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  public created_at: Date;
 
-  @Column()
-  updatedAt: number;
-
-  constructor(partial: Partial<RefreshTokenSessionsEntity>) {
-    if (partial) {
-      Object.assign(this, partial);
-      // this.id = this.id || uuidv4();
-      this.createdAt = this.createdAt || +new Date();
-      this.updatedAt = +new Date();
-    }
-  }
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updated_at: Date;
 }
