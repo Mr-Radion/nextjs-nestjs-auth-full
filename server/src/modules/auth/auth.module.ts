@@ -6,6 +6,7 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { UserEntity } from '../users/entity';
 import { RefreshTokenSessionsEntity } from './entity';
+import { UserRolesEntity } from '../roles/entity';
 
 @Module({
   controllers: [AuthController],
@@ -18,7 +19,7 @@ import { RefreshTokenSessionsEntity } from './entity';
         expiresIn: '30m',
       },
     }),
-    TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity]),
+    TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity, UserRolesEntity]),
   ],
   exports: [AuthService, JwtModule],
 })

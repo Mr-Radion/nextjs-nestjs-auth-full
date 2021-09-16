@@ -8,6 +8,7 @@ import { UserEntity } from '../users/entity';
 // import { getMongoRepository } from 'typeorm';
 import { UserDto } from '../users/dto';
 import { RefreshTokenSessionsEntity } from './entity';
+import { UserRolesEntity } from '../roles/entity';
 
 @Injectable()
 export class AuthService {
@@ -15,17 +16,19 @@ export class AuthService {
     @InjectRepository(UserEntity) private readonly userModel: Repository<UserEntity>,
     @InjectRepository(RefreshTokenSessionsEntity)
     private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
+    @InjectRepository(UserRolesEntity)
+    private readonly userRolesModel: Repository<UserRolesEntity>,
     private jwtService: JwtService,
   ) {}
 
-  async login(userData: any) {
+  async login(userData: any, ip: string) {
     try {
       const user = await this.validateUser(userData);
       if (user.banned)
         throw new UnauthorizedException({
           message: `Вы забанены ${user.banReason}`,
         });
-      const userDataAndTokens = await this.tokenSession(user);
+      const userDataAndTokens = await this.tokenSession(user, ip);
       return userDataAndTokens;
     } catch (error) {
       throw console.log(error);
@@ -47,7 +50,7 @@ export class AuthService {
     return user;
   }
 
-  async refreshToken(refreshtoken: string) {
+  async refreshToken(refreshtoken: string, ip: string) {
     if (!refreshtoken) throw new UnauthorizedException({ message: 'Пользователь не авторизован' });
     const userData = this.validateRefreshToken(refreshtoken);
     const tokenDb = await this.findToken(refreshtoken);
@@ -60,18 +63,31 @@ export class AuthService {
       throw new UnauthorizedException({
         message: `Вы забанены ${user.banReason}`,
       });
-    const userDataAndTokens = await this.tokenSession(user);
+    const userDataAndTokens = await this.tokenSession(user, ip);
     return userDataAndTokens;
   }
 
-  async tokenSession(userData: any) {
+  async tokenSession(userData: any, ip: string) {
     if (!userData)
       throw new UnauthorizedException({
         message: 'Пользователь с данным ID отсутствует в базе',
       });
-    const userDto = new UserDto(userData); // id, email, isActivated
+    // вытаскиваем роли для результатов
+    if (!userData.roles) {
+      const userRoles = await this.userRolesModel.findOneOrFail(
+        { userId: userData.id },
+        {
+          relations: ['role'],
+        },
+      );
+      userData.roles = userRoles.role;
+    }
+    const userDto = new UserDto(userData); // оставляем только id, email, roles, isActivated
     const tokens = await this.generateToken({ ...userDto });
-    await this.saveToken(userDto.id, tokens.refreshToken);
+    console.log('userData', userData, 74);
+    console.log('userDto', userDto, 75);
+    console.log('userDto.id', userDto.id, 76);
+    await this.saveToken(userDto.id, tokens.refreshToken, ip);
     return {
       ...tokens,
       user: userDto,
@@ -80,8 +96,6 @@ export class AuthService {
 
   async getUserByEmail(email: string) {
     const user = await this.userModel.findOne({ email });
-    // .populate('roles').lean();
-    // console.log(user, 'auth', 80);
     return user;
   }
 
@@ -98,17 +112,17 @@ export class AuthService {
     };
   }
 
-  async saveToken(userId, refreshToken: string) {
-    const tokenData = await this.tokenModel.update(
-      { userId },
-      { refreshToken },
-      // { new: true },
-    );
-    if (!tokenData) {
+  async saveToken(userId: any, refreshToken: string, ip: string) {
+    const hasToken = await this.tokenModel.findByIds(userId);
+    // создаем токен с нуля для нового пользователя или после удаления старого токена
+    if (!hasToken) {
       // const createdToken = new RefreshTokenSessionsEntity({ user: userId, refreshToken });
-      const createdToken = this.tokenModel.create({ userId, refreshToken });
+      console.log('токена нету');
+      console.log(hasToken);
+      const createdToken = this.tokenModel.create({ user: userId, refreshToken, ip });
       return await this.tokenModel.save(createdToken);
     }
+    const tokenData = await this.tokenModel.update(userId, { user: userId, refreshToken, ip });
     return tokenData;
   }
 
