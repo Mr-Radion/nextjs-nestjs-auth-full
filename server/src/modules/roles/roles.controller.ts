@@ -3,7 +3,9 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { RoleService } from './roles.service';
 import { CreateRoleDto } from './dto';
 // import { Roles } from 'src/lib/custom-decorators/roles-auth';
-import { JwtAutGuard } from '../auth/jwt-auth.guard';
+// import { JwtAutGuard } from '../auth/jwt-auth.guard';
+import { Auth } from 'src/lib/custom-decorators/auth.decorator';
+import { RolesType } from './roles.types';
 // import { RolesGuard } from '../auth/roles.guard';
 // import { RoleEntity } from './entity/roles.entity';
 
@@ -17,6 +19,7 @@ export class RolesController {
   // @UseGuards(JwtAutGuard)
   // @Roles('ADMIN')
   // @UseGuards(RolesGuard)
+  @Auth(RolesType.USER)
   @Post()
   create(@Body() dto: CreateRoleDto) {
     try {
