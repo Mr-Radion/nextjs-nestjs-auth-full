@@ -15,7 +15,7 @@ import { FacebookStrategy } from './facebook.strategy';
   providers: [
     AuthService,
     GoogleStrategy,
-    // FacebookStrategy
+    FacebookStrategy
   ],
   imports: [
     forwardRef(() => UsersModule),

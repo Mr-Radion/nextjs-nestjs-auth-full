@@ -14,11 +14,11 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 // import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Cookies } from 'src/lib/custom-decorators/cookies';
-import { Roles } from 'src/lib/custom-decorators/roles-auth';
+// import { Roles } from 'src/lib/custom-decorators/roles-auth';
 import { CreateUserDto } from '../users/dto';
 import { AuthService } from './auth.service';
-import { RolesGuard } from './roles.guard';
-import { RefreshTokenSessionsEntity } from './entity/refresh.token.entity';
+// import { RolesGuard } from './roles.guard';
+// import { RefreshTokenSessionsEntity } from './entity/refresh.token.entity';
 
 // @ApiTags('Авторизация')
 @Controller('auth')
@@ -93,21 +93,17 @@ export class AuthController {
     return this.authService.googleLogin(req);
   }
 
-  // @Get('/facebook')
-  // @UseGuards(AuthGuard('facebook'))
-  // async facebookLogin(): Promise<any> {
-  //   return HttpStatus.OK;
-  // }
+  @Get('/facebook')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLogin(): Promise<any> {
+    return HttpStatus.OK;
+  }
 
-  // @Get('/facebook/redirect')
-  // @UseGuards(AuthGuard('facebook'))
-  // async facebookLoginRedirect(@Req() req: Request): Promise<any> {
-  //   console.log(req)
-  //   return {
-  //     statusCode: HttpStatus.OK,
-  //     // data: req.user,
-  //   };
-  // }
+  @Get('/facebook/redirect')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLoginRedirect(@Req() req) {
+    return this.authService.facebookleLogin(req);
+  }
 
   // @ApiOperation({ summary: 'Выход из приложения' })
   // @ApiResponse({ status: 200 })
