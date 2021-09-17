@@ -7,10 +7,16 @@ import { AuthController } from './auth.controller';
 import { UserEntity } from '../users/entity';
 import { RefreshTokenSessionsEntity } from './entity';
 import { UserRolesEntity } from '../roles/entity';
+import { GoogleStrategy } from './google.strategy';
+import { FacebookStrategy } from './facebook.strategy';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    // FacebookStrategy
+  ],
   imports: [
     forwardRef(() => UsersModule),
     JwtModule.register({

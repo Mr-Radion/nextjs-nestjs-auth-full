@@ -5,7 +5,11 @@ import { observer } from 'mobx-react-lite';
 export const LoginForm: FC = observer(() => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-    const { store } = useContext(Context);
+  const { store } = useContext(Context);
+
+  const googleFetch = () => {
+    fetch('http://localhost:5000/api/auth/google');
+  };
 
   return (
     <div>
@@ -21,6 +25,7 @@ export const LoginForm: FC = observer(() => {
         type="password"
         placeholder="Пароль"
       />
+      <button onClick={() => googleFetch()}>Google</button>
       <button onClick={() => store.login(email, password)}>Логин</button>
       <button onClick={() => store.registration(email, password)}>Регистрация</button>
     </div>

@@ -9,7 +9,9 @@ import {
   UseGuards,
   Ip,
   Req,
+  HttpStatus,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 // import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Cookies } from 'src/lib/custom-decorators/cookies';
 import { Roles } from 'src/lib/custom-decorators/roles-auth';
@@ -63,7 +65,11 @@ export class AuthController {
   // @ApiOperation({ summary: 'Обновление токена' })
   // @ApiResponse({ status: 200, type: [RefreshTokenSessionsEntity] })
   @Post('/refresh')
-  async refresh(@Ip() ip: any, @Cookies('token') refreshtoken: string, @Res({ passthrough: true }) response: any) {
+  async refresh(
+    @Ip() ip: any,
+    @Cookies('token') refreshtoken: string,
+    @Res({ passthrough: true }) response: any,
+  ) {
     try {
       const userData = await this.authService.refreshToken(refreshtoken, ip);
       response.cookie('token', userData.refreshToken, {
@@ -76,6 +82,32 @@ export class AuthController {
       console.log(error);
     }
   }
+
+  @Get('/google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req) {}
+
+  @Get('/google/redirect')
+  @UseGuards(AuthGuard('google'))
+  googleAuthRedirect(@Req() req) {
+    return this.authService.googleLogin(req);
+  }
+
+  // @Get('/facebook')
+  // @UseGuards(AuthGuard('facebook'))
+  // async facebookLogin(): Promise<any> {
+  //   return HttpStatus.OK;
+  // }
+
+  // @Get('/facebook/redirect')
+  // @UseGuards(AuthGuard('facebook'))
+  // async facebookLoginRedirect(@Req() req: Request): Promise<any> {
+  //   console.log(req)
+  //   return {
+  //     statusCode: HttpStatus.OK,
+  //     // data: req.user,
+  //   };
+  // }
 
   // @ApiOperation({ summary: 'Выход из приложения' })
   // @ApiResponse({ status: 200 })
