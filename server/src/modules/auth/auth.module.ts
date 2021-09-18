@@ -6,17 +6,15 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { UserEntity } from '../users/entity';
 import { RefreshTokenSessionsEntity } from './entity';
-import { UserRolesEntity } from '../roles/entity';
+import { RoleEntity, UserRolesEntity } from '../roles/entity';
 import { GoogleStrategy } from './google.strategy';
 import { FacebookStrategy } from './facebook.strategy';
+// import { RolesModule } from '../roles/roles.module';
+import { RoleService } from '../roles/roles.service';
 
 @Module({
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    GoogleStrategy,
-    FacebookStrategy
-  ],
+  providers: [AuthService, GoogleStrategy, FacebookStrategy, RoleService],
   imports: [
     forwardRef(() => UsersModule),
     JwtModule.register({
@@ -25,7 +23,7 @@ import { FacebookStrategy } from './facebook.strategy';
         expiresIn: '30m',
       },
     }),
-    TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity, UserRolesEntity]),
+    TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity, UserRolesEntity, RoleEntity]),
   ],
   exports: [AuthService, JwtModule],
 })

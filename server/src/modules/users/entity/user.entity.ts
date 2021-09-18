@@ -38,11 +38,11 @@ export class UserEntity extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   lastName: string;
 
-  @Column({ type: 'text', unique: true, nullable: false })
+  @Column({ type: 'text', unique: true, nullable: true })
   email: string;
 
   // @Exclude()
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   password: string;
 
   // @ApiModelProperty({ description: 'The search location of the User' })
@@ -52,10 +52,19 @@ export class UserEntity extends BaseEntity {
   @Column({ default: false })
   isActivated: boolean;
 
-  @Column({ default: false })
+  @Column({ default: null })
+  facebookId: string;
+
+  @Column({ nullable: true })
+  avatar: string;
+
+  @Column({ nullable: true })
+	phone: string;
+
+  @Column({ default: null })
   gender: string;
 
-  @Column()
+  @Column({ nullable: true })
   activationLink: string;
 
   @Column({ default: false })

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -35,8 +35,15 @@ export class UsersService {
   ) {}
 
   async createUser(dto: CreateUserDto, ip: string): Promise<any & UserDto> {
+    // во первых уменьшаем лишние запросы доп проверкой, во вторых в бд убираем обязательность почты и пароля, чтобы иметь возможность регистрировать
+    // через соц сеть, если она не выдала нам почту и соответственно нету пароля у нас и проверка данных на сервере поставщика
+    if (!dto.email) {
+      throw new HttpException(`Вы не ввели почту`, HttpStatus.BAD_REQUEST);
+    }
+    if (!dto.password) {
+      throw new HttpException(`Вы не ввели пароль`, HttpStatus.BAD_REQUEST);
+    }
     const candidate = await this.authService.getUserByEmail(dto.email);
-    console.log(dto);
     if (candidate) {
       throw new HttpException(
         `Пользователь с почтовым адресом ${dto.email} уже существует`,
@@ -64,12 +71,32 @@ export class UsersService {
       `${process.env.API_URL}/api/auth/activate/${activationLink}`,
     );
     const userDataAndTokens = await this.authService.tokenSession(createdUser, ip);
-    console.log(userDataAndTokens); // надо проверить, сохраняется ли рефреш токен в бд, если нет, то почему
     return userDataAndTokens;
+  }
+
+  async updateAvatar(id: any, file: any): Promise<boolean | undefined> {
+    // console.log(id, file)
+    const foundUser = await this.userModel.findOne({ id });
+
+    if (!foundUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    // foundUser.avatar = await uploadFile(file);
+
+    // const updateUser = await getMongoRepository(UserEntity).save(foundUser)
+
+    // return updateUser ? true : false
+    return true;
   }
 
   // ДОБАВИТЬ СОРТИРОВКУ В НЕСКОЛЬКИХ ВАРИАНТАХ
   async getAllUsers(query: UserQueryDto): Promise<CreateUserDto[]> {
+    const qb = this.userModel.createQueryBuilder('u');
+
+    // qb.limit(query.limit || 0);
+    // qb.take(query.take || 10);
+
     return this.userModel.find();
     // TODO: о сортировке, транзакциях разузнать
     // https://coderoad.ru/61625105/%D0%9F%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%B8%D0%B9-%D1%82%D0%B8%D0%BF-%D1%81%D0%BE%D1%80%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BA%D0%B8-typeorm

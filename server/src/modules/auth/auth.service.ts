@@ -5,10 +5,10 @@ import * as jwt from 'jsonwebtoken';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../users/entity';
-// import { getMongoRepository } from 'typeorm';
 import { UserDto } from '../users/dto';
 import { RefreshTokenSessionsEntity } from './entity';
 import { UserRolesEntity } from '../roles/entity';
+import { RoleService } from '../roles/roles.service';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +18,7 @@ export class AuthService {
     private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
     @InjectRepository(UserRolesEntity)
     private readonly userRolesModel: Repository<UserRolesEntity>,
+    private roleService: RoleService,
     private jwtService: JwtService,
   ) {}
 
@@ -46,15 +47,49 @@ export class AuthService {
     };
   }
 
-  facebookleLogin(req) {
+  async facebookleLogin(req: any, ip: string) {
     if (!req.user) {
-      return 'No user from google';
+      return 'No user from facebook';
     }
 
+    const { id, email, firstName, lastName, photos } = req.user.user;
+
+    // поиск пользователя в базе для авторизации
+    const findUser = await this.userModel.findOne({
+      where: {
+        facebookId: id,
+      },
+    });
+
+    let createUser: any;
+
+    // регистрация пользователя
+    if (!findUser) {
+      // создание юзера
+      createUser = this.userModel.create({
+        facebookId: id,
+        email,
+        firstName,
+        lastName,
+        avatar: photos,
+      });
+      await this.userModel.save(createUser);
+
+      // добавление роли юзера
+      const roleId = await this.roleService.getRoleByValue('USER');
+      let commonUsRol = new UserRolesEntity();
+      commonUsRol.roleId = roleId.id;
+      commonUsRol.userId = createUser.id;
+      await commonUsRol.save();
+    }
+
+    // сохранение и выдача токенов
+    const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
     return {
       statusCode: HttpStatus.OK,
-      message: 'User information from google',
-      user: req.user,
+      message: 'User information from facebook',
+      // user: req.user,
+      user: userDataAndTokens,
     };
   }
 

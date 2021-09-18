@@ -1,10 +1,8 @@
-// если почты не существует, зарегистрировать напрямую
+// TODO: добавить регистрацию с созданием юзера по facebookid, если пользователь с таким id уже существует, просто аутенфикация 
+// реализовать бизнес логику в сервисе
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-facebook';
-import { config } from 'dotenv';
-
-config();
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
@@ -25,9 +23,10 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     done: (err: any, user?: any, info?: any) => void,
   ): Promise<any> {
     console.log(profile);
-    const { name, emails, photos } = profile;
+    const { name, emails, photos, id } = profile;
     const user = {
-      // email: emails[0]?.value,
+      id,
+      email: emails[0]?.value ?? null,
       photos: photos?.values,
       firstName: name?.givenName,
       lastName: name?.familyName,
