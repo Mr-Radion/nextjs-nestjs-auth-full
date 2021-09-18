@@ -1,5 +1,3 @@
-// TODO: добавить регистрацию с созданием юзера по facebookid, если пользователь с таким id уже существует, просто аутенфикация 
-// реализовать бизнес логику в сервисе
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-facebook';

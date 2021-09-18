@@ -55,6 +55,9 @@ export class UserEntity extends BaseEntity {
   @Column({ default: null })
   facebookId: string;
 
+  @Column({ default: null })
+  googleId: string;
+
   @Column({ nullable: true })
   avatar: string;
 

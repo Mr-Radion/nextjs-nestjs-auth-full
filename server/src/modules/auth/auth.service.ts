@@ -36,14 +36,49 @@ export class AuthService {
     }
   }
 
-  googleLogin(req) {
+  async googleLogin(req: any, ip: string) {
     if (!req.user) {
       return 'No user from google';
     }
 
+    const { id, picture, firstName, lastName, email } = req.user;
+    console.log('req.users', id, picture, firstName, lastName, email);
+
+    const findUser = await this.userModel.findOne({
+      where: {
+        googleId: id,
+      },
+    });
+
+    let createUser: any;
+
+    // регистрация пользователя
+    if (!findUser) {
+      // создание юзера
+      createUser = this.userModel.create({
+        googleId: id,
+        email,
+        firstName,
+        lastName,
+        avatar: picture,
+      });
+      await this.userModel.save(createUser);
+
+      // добавление роли юзера
+      const roleId = await this.roleService.getRoleByValue('USER');
+      let commonUsRol = new UserRolesEntity();
+      commonUsRol.roleId = roleId.id;
+      commonUsRol.userId = createUser.id;
+      await commonUsRol.save();
+    }
+
+    // сохранение и выдача токенов
+    const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
+
     return {
+      statusCode: HttpStatus.OK,
       message: 'User information from google',
-      user: req.user,
+      user: userDataAndTokens,
     };
   }
 
@@ -142,9 +177,6 @@ export class AuthService {
     }
     const userDto = new UserDto(userData); // оставляем только id, email, roles, isActivated
     const tokens = await this.generateToken({ ...userDto });
-    console.log('userData', userData, 74);
-    console.log('userDto', userDto, 75);
-    console.log('userDto.id', userDto.id, 76);
     await this.saveToken(userDto.id, tokens.refreshToken, ip);
     return {
       ...tokens,
@@ -175,8 +207,6 @@ export class AuthService {
     // создаем токен с нуля для нового пользователя или после удаления старого токена
     if (!hasToken) {
       // const createdToken = new RefreshTokenSessionsEntity({ user: userId, refreshToken });
-      console.log('токена нету');
-      console.log(hasToken);
       const createdToken = this.tokenModel.create({ user: userId, refreshToken, ip });
       return await this.tokenModel.save(createdToken);
     }

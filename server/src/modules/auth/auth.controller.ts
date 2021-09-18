@@ -89,8 +89,19 @@ export class AuthController {
 
   @Get('/google/redirect')
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req) {
-    return this.authService.googleLogin(req);
+  async googleAuthRedirect(@Ip() ip: any, @Req() req: any, @Res({ passthrough: true }) response: any) {
+    try {
+      const userData = await this.authService.googleLogin(req, ip);
+      console.log(userData['user'])
+      response.cookie('token', userData['user'].refreshToken, {
+        maxAge: 60 * 24 * 68 * 68 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+      });
+      return userData;
+    } catch (error) {
+      console.log(error?.message);
+    }
   }
 
   @Get('/facebook')
