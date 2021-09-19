@@ -12,6 +12,8 @@ import {
   UseGuards,
   Req,
   Ip,
+  UploadedFile,
+  UseInterceptors,
   // UsePipes,
 } from '@nestjs/common';
 // import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -30,9 +32,20 @@ import {
 } from './dto';
 import { UsersService } from './users.service';
 import { UserEntity } from './entity/user.entity';
+import { AuthGuard } from '@nestjs/passport';
+import {
+  ApiResponse,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiConsumes,
+  ApiTags,
+  // ApiBody,
+  ApiImplicitFile,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 // import { ValidationPipe } from 'src/lib/pipes/validation.pipe';
 
-// @ApiTags('Пользователи')
+@ApiTags('Пользователи')
 @Controller('users')
 export class UsersController {
   constructor(private userService: UsersService) {}
@@ -82,7 +95,11 @@ export class UsersController {
   // @ApiResponse({ status: 200, type: UserEntity })
   // @UsePipes(ValidationPipe)
   @Post()
-  async create(@Ip() ip: string, @Body() userDto: CreateUserDto, @Res({ passthrough: true }) response: any) {
+  async create(
+    @Ip() ip: string,
+    @Body() userDto: CreateUserDto,
+    @Res({ passthrough: true }) response: any,
+  ) {
     try {
       // console.log(userDto);
       const userData = await this.userService.createUser(userDto, ip);
@@ -95,6 +112,37 @@ export class UsersController {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  @ApiResponse({
+    status: 200,
+    description: 'The found record is executed',
+    type: Boolean,
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary: 'Update one Avatar for current User 👻',
+  })
+  @Post('avatar')
+  @ApiConsumes('multipart/form-data')
+  @ApiImplicitFile({
+    name: 'avatar',
+    required: true,
+    description: 'Send one file',
+  })
+  // @ApiBody({
+  //   examples: {
+  //     name: 'avatar',
+  //     description: 'Send one file',
+  //   },
+  // })
+  @UseInterceptors(FileInterceptor('avatar'))
+  updateAvatar(@Req() req: any, @UploadedFile() file: any) {
+    const { user } = req;
+    const { id } = user;
+
+    return this.userService.updateAvatar(id, file);
   }
 
   // @ApiOperation({ summary: 'Удаление пользователя' })
