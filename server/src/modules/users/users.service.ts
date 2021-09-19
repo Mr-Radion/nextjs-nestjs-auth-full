@@ -18,8 +18,9 @@ import { UserEntity } from './entity';
 import { UserRolesEntity } from '../roles/entity';
 import { AuthService } from '../auth/auth.service';
 import { MailService } from '../mail/mail.service';
-// import { Role } from '../roles/schemas';
 import { RefreshTokenSessionsEntity } from '../auth/entity';
+import { FileService } from '../file/file.service';
+import { FileType } from '../file/file.service';
 
 @Injectable()
 export class UsersService {
@@ -29,14 +30,13 @@ export class UsersService {
     @InjectRepository(RefreshTokenSessionsEntity)
     private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
     private authService: AuthService,
+    private fileService: FileService,
     private roleService: RoleService,
     private jwtService: JwtService,
-    private mailService: MailService, // @InjectModel(RefreshTokenSessions.name) // private readonly tokenModel: Model<RefreshTokenSessionsDocument>,
+    private mailService: MailService,
   ) {}
 
   async createUser(dto: CreateUserDto, ip: string): Promise<any & UserDto> {
-    // во первых уменьшаем лишние запросы доп проверкой, во вторых в бд убираем обязательность почты и пароля, чтобы иметь возможность регистрировать
-    // через соц сеть, если она не выдала нам почту и соответственно нету пароля у нас и проверка данных на сервере поставщика
     if (!dto.email) {
       throw new HttpException(`Вы не ввели почту`, HttpStatus.BAD_REQUEST);
     }
@@ -74,6 +74,7 @@ export class UsersService {
     return userDataAndTokens;
   }
 
+  // ПРОТЕСТИРОВАТЬ!!!
   async updateAvatar(id: any, file: any): Promise<boolean | undefined> {
     // console.log(id, file)
     const foundUser = await this.userModel.findOne({ id });
@@ -82,12 +83,11 @@ export class UsersService {
       throw new NotFoundException('User not found.');
     }
 
-    // foundUser.avatar = await uploadFile(file);
+    foundUser.avatar = this.fileService.createFileLocal(FileType.IMAGE, file);
 
-    // const updateUser = await getMongoRepository(UserEntity).save(foundUser)
+    const updateUser = await this.userModel.save(foundUser);
 
-    // return updateUser ? true : false
-    return true;
+    return updateUser ? true : false;
   }
 
   // ДОБАВИТЬ СОРТИРОВКУ В НЕСКОЛЬКИХ ВАРИАНТАХ

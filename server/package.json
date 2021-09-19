@@ -32,6 +32,7 @@
     "@nestjs/jwt": "^8.0.0",
     "@nestjs/passport": "^8.0.1",
     "@nestjs/platform-express": "^7.6.15",
+    "@nestjs/serve-static": "^2.2.2",
     "@nestjs/swagger": "^5.0.4",
     "@nestjs/typeorm": "^8.0.1",
     "bcryptjs": "^2.4.3",

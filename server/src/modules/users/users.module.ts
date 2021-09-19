@@ -8,6 +8,7 @@ import { MailModule } from '../mail/mail.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entity';
 import { RefreshTokenSessionsEntity } from '../auth/entity';
+import { FileModule } from '../file/file.module';
 
 @Module({
   controllers: [UsersController],
@@ -17,6 +18,7 @@ import { RefreshTokenSessionsEntity } from '../auth/entity';
     RolesModule,
     forwardRef(() => AuthModule),
     MailModule,
+    FileModule,
   ],
   exports: [UsersService],
 })
