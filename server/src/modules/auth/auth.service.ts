@@ -72,6 +72,11 @@ export class AuthService {
       await commonUsRol.save();
     }
 
+    if (findUser.banned || createUser.banned)
+      throw new UnauthorizedException({
+        message: `Вы забанены ${findUser.banReason || createUser.banReason}`,
+      });
+
     // сохранение и выдача токенов
     const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
 
@@ -117,6 +122,11 @@ export class AuthService {
       commonUsRol.userId = createUser.id;
       await commonUsRol.save();
     }
+
+    if (findUser.banned || createUser.banned)
+      throw new UnauthorizedException({
+        message: `Вы забанены ${findUser.banReason || createUser.banReason}`,
+      });
 
     // сохранение и выдача токенов
     const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
