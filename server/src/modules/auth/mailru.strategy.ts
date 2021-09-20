@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy } from 'passport-facebook';
+import { Profile, Strategy } from 'passport-mail';
 
 @Injectable()
-export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
+export class MailruStrategy extends PassportStrategy(Strategy, 'mailru') {
   constructor() {
     super({
-      clientID: process.env.FACEBOOK_APP_ID,
-      clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+      clientID: process.env.MAILRU_APP_ID,
+      clientSecret: process.env.MAILRU_APP_SECRET,
+      callbackURL: process.env.MAILRU_CALLBACK_URL,
       scope: 'email',
       profileFields: ['emails', 'name', 'photos'],
     });
@@ -33,3 +33,5 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     done(null, user);
   }
 }
+
+// http://www.passportjs.org/packages/passport-mail

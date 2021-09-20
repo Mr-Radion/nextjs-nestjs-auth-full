@@ -89,15 +89,20 @@ export class AuthController {
 
   @Get('/google/redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Ip() ip: any, @Req() req: any, @Res({ passthrough: true }) response: any) {
+  async googleAuthRedirect(
+    @Ip() ip: any,
+    @Req() req: any,
+    @Res({ passthrough: true }) response: any,
+  ) {
     try {
       const userData = await this.authService.googleLogin(req, ip);
-      console.log(userData['user'])
-      response.cookie('token', userData['user'].refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-      });
+      if (userData['user'].refreshToken) {
+        response.cookie('token', userData['user'].refreshToken, {
+          maxAge: 60 * 24 * 68 * 68 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+        });
+      }
       return userData;
     } catch (error) {
       console.log(error?.message);
@@ -119,6 +124,32 @@ export class AuthController {
   ) {
     try {
       const userData = await this.authService.facebookleLogin(req, ip);
+      response.cookie('token', userData['user'].refreshToken, {
+        maxAge: 60 * 24 * 68 * 68 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+      });
+      return userData;
+    } catch (error) {
+      console.log('/facebook/redirect', error?.message);
+    }
+  }
+
+  @Get('/vkontakte')
+  @UseGuards(AuthGuard('vkontakte'))
+  async vkontakteLogin(): Promise<any> {
+    return HttpStatus.OK;
+  }
+
+  @Get('/vkontakte/redirect')
+  @UseGuards(AuthGuard('vkontakte'))
+  async vkontakteLoginRedirect(
+    @Ip() ip: any,
+    @Req() req: any,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    try {
+      const userData = await this.authService.vkontakteleLogin(req, ip);
       response.cookie('token', userData['user'].refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,

@@ -36,23 +36,41 @@ export class AuthService {
     }
   }
 
+  // включить сюда все соц сети и обращаться из контроллеров
+  async autinficate(req: any, ip: any, setId: any) {
+    const { id, firstName, lastName, email, picture } = req.user;
+  }
+
   async googleLogin(req: any, ip: string) {
     if (!req.user) {
       return 'No user from google';
     }
 
-    const { id, picture, firstName, lastName, email } = req.user;
-    console.log('req.users', id, picture, firstName, lastName, email);
+    const { id, firstName, lastName, email, picture } = req.user;
 
+    // Здесь googleId OR email
     const findUser = await this.userModel.findOne({
-      where: {
-        googleId: id,
-      },
+      where: [{ googleId: id }, { email }],
     });
+
+    // const findUser = await this.userModel
+    //   .createQueryBuilder()
+    //   .where('googleId = :id OR email = :email', {
+    //     name: 'john',
+    //     lastName: 'doe',
+    //   })
+    //   .getMany();
+
+    // если через указанную почту ранее регистрировались с паролем, потом используют для входа через соц сеть,
+    // можно таким образом объединить данные
+    if (findUser.email && !findUser.googleId) {
+      findUser.googleId = id;
+      await this.userModel.save(findUser);
+    }
 
     let createUser: any;
 
-    // регистрация пользователя
+    // // регистрация пользователя
     if (!findUser) {
       // создание юзера
       createUser = this.userModel.create({
@@ -72,7 +90,7 @@ export class AuthService {
       await commonUsRol.save();
     }
 
-    if (findUser.banned || createUser.banned)
+    if (findUser?.banned || createUser?.banned)
       throw new UnauthorizedException({
         message: `Вы забанены ${findUser.banReason || createUser.banReason}`,
       });
@@ -92,14 +110,54 @@ export class AuthService {
       return 'No user from facebook';
     }
 
-    const { id, email, firstName, lastName, photos } = req.user.user;
+    const { id, email, firstName, lastName, picture } = req.user;
 
     // поиск пользователя в базе для авторизации
     const findUser = await this.userModel.findOne({
-      where: {
-        facebookId: id,
-      },
+      where: [{ facebookId: id }, { email }],
     });
+
+    // объединение аккаунтов, добавлением недостающих данных из фейсбука в существующий аккаунт
+    if (findUser.email && !findUser.googleId) {
+      if (findUser.firstName && findUser.lastName && findUser.avatar)
+        await this.userModel.update({ email }, { facebookId: id });
+      if (!findUser.firstName && !findUser.lastName && !findUser.avatar && picture)
+        await this.userModel.update(
+          { email },
+          { facebookId: id, firstName, lastName, avatar: picture },
+        );
+      if (!findUser.firstName && !findUser.lastName && findUser.avatar)
+        await this.userModel.update({ email }, { facebookId: id, firstName, lastName });
+      if (!findUser.firstName && findUser.lastName && !findUser.avatar && picture)
+        await this.userModel.update({ email }, { facebookId: id, firstName, avatar: picture });
+      if (findUser.firstName && !findUser.lastName && !findUser.avatar && picture)
+        await this.userModel.update({ email }, { facebookId: id, lastName, avatar: picture });
+      if (!findUser.firstName && findUser.lastName && findUser.avatar)
+        await this.userModel.update({ email }, { facebookId: id, firstName });
+      if (findUser.firstName && !findUser.lastName && findUser.avatar)
+        await this.userModel.update({ email }, { facebookId: id, lastName });
+      if (findUser.firstName && findUser.lastName && !findUser.avatar && picture)
+        await this.userModel.update({ email }, { facebookId: id, avatar: picture });
+    }
+
+    // (firstName && lastName && avatar) facebookId
+    // (!firstName && !lastName && !avatar) firstName, lastName, avatar
+    // (!firstName && !lastName && avatar) firstName, lastName
+    // (!firstName && lastName && !avatar) firstName, avatar
+    // (firstName && !lastName && !avatar) lastName, avatar
+    // (!firstName && lastName && avatar) firstName
+    // (firstName && !lastName && avatar) lastName
+    // (firstName && lastName && !avatar) avatar
+
+    // TODO: нужно сравнить, если в findUser какие либо свойства находящиеся в req.user пустые, то сформировать
+    // массив из этих данных req.user и добавить их методом update ибо методом save пользователь перемещается вниз таблицы
+    // но надо проверять только те свойства, которые есть в и в req.user и в findUser
+    // заменив того монстра навверху и продублировав для гугла
+    // трансформировать объекты в массив, чтобы перебрать
+    // updateUser = req.user.filter((data) => findUser.some((elem) => elem.key === data.key && !elem.value))
+    // updateUser - трансформировать в объект
+    // updateUser = Object.assign({}, updateUser)
+    // await this.userModel.update({ email }, updateUser);
 
     let createUser: any;
 
@@ -111,7 +169,7 @@ export class AuthService {
         email,
         firstName,
         lastName,
-        avatar: photos,
+        avatar: picture,
       });
       await this.userModel.save(createUser);
 
@@ -136,6 +194,10 @@ export class AuthService {
       // user: req.user,
       user: userDataAndTokens,
     };
+  }
+
+  vkontakteleLogin(req: any, ip: string) {
+    console.log(req.user);
   }
 
   async logout(refreshToken: string) {
@@ -185,7 +247,7 @@ export class AuthService {
       );
       userData.roles = userRoles.role;
     }
-    const userDto = new UserDto(userData); // оставляем только id, email, roles, isActivated
+    const userDto = new UserDto(userData); // оставляем только id, facebookId, googleId, email, roles, isActivated
     const tokens = await this.generateToken({ ...userDto });
     await this.saveToken(userDto.id, tokens.refreshToken, ip);
     return {
