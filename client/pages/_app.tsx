@@ -1,4 +1,4 @@
-import DevTools from 'mobx-react-devtools';
+// import DevTools from 'mobx-react-devtools';
 import { Context, store } from '../features/common/store';
 
 export default function App({ Component, pageProps }) {
@@ -10,7 +10,7 @@ export default function App({ Component, pageProps }) {
         }}
       >
         <Component {...pageProps}>
-          <DevTools />
+          {/* <DevTools /> */}
         </Component>
       </Context.Provider>
     </>
