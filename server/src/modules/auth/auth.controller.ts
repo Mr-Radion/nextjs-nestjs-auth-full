@@ -95,15 +95,17 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = this.authService.googleLogin(req, ip, 'googleId');
+      const userData = await this.authService.googleLogin(req, ip, 'googleId');
       if (!userData['user'].refreshToken) {
         return 'No user refreshToken from google';
       }
-      response.cookie('token', userData['user'].refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-      });
+      if (userData) {
+        response.cookie('token', userData['user'].refreshToken, {
+          maxAge: 60 * 24 * 68 * 68 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+        });
+      }
       return userData;
     } catch (error) {
       console.log('googleAuthRedirect controller error', error?.message);
@@ -125,11 +127,16 @@ export class AuthController {
   ) {
     try {
       const userData = this.authService.facebookLogin(req, ip, 'facebookId');
-      response.cookie('token', userData['user'].refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-      });
+      if (!userData['user'].refreshToken) {
+        return 'No user refreshToken from google';
+      }
+      if (userData) {
+        response.cookie('token', userData['user'].refreshToken, {
+          maxAge: 60 * 24 * 68 * 68 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+        });
+      }
       return userData;
     } catch (error) {
       console.log('/facebook/redirect', error?.message);
@@ -151,11 +158,16 @@ export class AuthController {
   ) {
     try {
       const userData = this.authService.vkontakteLogin(req, ip, 'vkontakteId');
-      response.cookie('token', userData['user'].refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-      });
+      if (!userData['user'].refreshToken) {
+        return 'No user refreshToken from google';
+      }
+      if (userData) {
+        response.cookie('token', userData['user'].refreshToken, {
+          maxAge: 60 * 24 * 68 * 68 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+        });
+      }
       return userData;
     } catch (error) {
       console.log(error?.message);
@@ -177,11 +189,16 @@ export class AuthController {
   ) {
     try {
       const userData = this.authService.odnoklassnikiLogin(req, ip, 'odnoklassnikiId');
-      response.cookie('token', userData['user'].refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-      });
+      if (!userData['user'].refreshToken) {
+        return 'No user refreshToken from google';
+      }
+      if (userData) {
+        response.cookie('token', userData['user'].refreshToken, {
+          maxAge: 60 * 24 * 68 * 68 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+        });
+      }
       return userData;
     } catch (error) {
       console.log(error?.message);
@@ -203,11 +220,16 @@ export class AuthController {
   ) {
     try {
       const userData = this.authService.mailruLogin(req, ip, 'mailruId');
-      response.cookie('token', userData['user'].refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-      });
+      if (!userData['user'].refreshToken) {
+        return 'No user refreshToken from google';
+      }
+      if (userData) {
+        response.cookie('token', userData['user'].refreshToken, {
+          maxAge: 60 * 24 * 68 * 68 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+        });
+      }
       return userData;
     } catch (error) {
       console.log(error?.message);

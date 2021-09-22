@@ -70,13 +70,11 @@ export class AuthService {
     // если через указанную почту ранее регистрировались с паролем, потом используют для входа через соц сеть,
     // можно таким образом объединить данные аккаунтов
     if (findUser?.email && !findUser.googleId) {
-      console.log('сюда попало');
       const obj = {};
       for (let [key, value] of Object.entries(req.user)) {
         Object.keys(findUser).indexOf(key) !== -1 && !findUser[key] ? (obj[key] = value) : '';
       }
       await this.userModel.update(findUser.id, obj);
-      console.log('сюда попало 2');
     }
 
     let createUser: any;
@@ -115,24 +113,24 @@ export class AuthService {
     };
   }
 
-  googleLogin(req: any, ip: string, socId: any) {
-    this.autinficateSocialNetwork(req, ip, socId);
+  async googleLogin(req: any, ip: string, socId: any) {
+    return this.autinficateSocialNetwork(req, ip, socId);
   }
 
-  facebookLogin(req: any, ip: string, socId: any) {
-    this.autinficateSocialNetwork(req, ip, socId);
+  async facebookLogin(req: any, ip: string, socId: any) {
+    return this.autinficateSocialNetwork(req, ip, socId);
   }
 
-  vkontakteLogin(req: any, ip: string, socId: any) {
-    this.autinficateSocialNetwork(req, ip, socId);
+  async vkontakteLogin(req: any, ip: string, socId: any) {
+    return this.autinficateSocialNetwork(req, ip, socId);
   }
 
-  odnoklassnikiLogin(req: any, ip: string, socId: any) {
-    this.autinficateSocialNetwork(req, ip, socId);
+  async odnoklassnikiLogin(req: any, ip: string, socId: any) {
+    return this.autinficateSocialNetwork(req, ip, socId);
   }
 
-  mailruLogin(req: any, ip: string, socId: any) {
-    this.autinficateSocialNetwork(req, ip, socId);
+  async mailruLogin(req: any, ip: string, socId: any) {
+    return this.autinficateSocialNetwork(req, ip, socId);
   }
 
   async logout(refreshToken: string) {
@@ -228,7 +226,6 @@ export class AuthService {
 
   private async validateUser(userData: any): Promise<any> {
     try {
-      console.log(userData, 'auth-service', 121);
       const user = await this.getUserByEmail(userData.email);
       if (!user)
         throw new UnauthorizedException({
