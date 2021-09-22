@@ -29,9 +29,9 @@ import path from 'path';
         synchronize: true,
       }),
     }),
-    ServeStaticModule.forRoot({
-      rootPath: path.resolve(__dirname, '..', 'static'),
-    }),
+    // ServeStaticModule.forRoot({
+    //   rootPath: path.resolve(__dirname, '..', 'static'),
+    // }),
     UsersModule,
     RolesModule,
     MailModule,

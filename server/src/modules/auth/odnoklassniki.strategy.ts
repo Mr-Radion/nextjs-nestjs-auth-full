@@ -23,9 +23,9 @@ export class OdnoklassnikiStrategy extends PassportStrategy(Strategy, 'odnoklass
     console.log(profile);
     const { name, emails, photos, id } = profile;
     const user = {
-      id,
+      odnoklassnikiId: id,
       email: emails[0]?.value ?? null,
-      picture: photos?.values,
+      avatar: photos?.values,
       firstName: name?.givenName,
       lastName: name?.familyName,
       accessToken,

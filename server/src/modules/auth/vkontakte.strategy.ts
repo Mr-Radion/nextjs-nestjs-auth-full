@@ -23,9 +23,9 @@ export class VkontakteStrategy extends PassportStrategy(Strategy, 'vkontakte') {
     console.log(profile);
     const { name, emails, photos, id } = profile;
     const user = {
-      id,
+      vkontakteId: id,
       email: emails[0]?.value ?? null,
-      picture: photos?.values,
+      avatar: photos?.values,
       firstName: name?.givenName,
       lastName: name?.familyName,
       accessToken,

@@ -58,11 +58,20 @@ export class UserEntity extends BaseEntity {
   @Column({ default: null })
   googleId: string;
 
+  @Column({ default: null })
+  vkontakteId: string;
+
+  @Column({ default: null })
+  mailruId: string;
+
+  @Column({ default: null })
+  odnoklassnikiId: string;
+
   @Column({ nullable: true })
   avatar: string;
 
   @Column({ nullable: true })
-	phone: string;
+  phone: string;
 
   @Column({ default: null })
   gender: string;

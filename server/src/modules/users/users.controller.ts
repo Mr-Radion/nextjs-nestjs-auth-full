@@ -40,7 +40,7 @@ import {
   ApiConsumes,
   ApiTags,
   // ApiBody,
-  ApiImplicitFile,
+  // ApiImplicitFile,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 // import { ValidationPipe } from 'src/lib/pipes/validation.pipe';
@@ -126,11 +126,11 @@ export class UsersController {
   })
   @Post('avatar')
   @ApiConsumes('multipart/form-data')
-  @ApiImplicitFile({
-    name: 'avatar',
-    required: true,
-    description: 'Send one file',
-  })
+  // @ApiImplicitFile({
+  //   name: 'avatar',
+  //   required: true,
+  //   description: 'Send one file',
+  // })
   // @ApiBody({
   //   examples: {
   //     name: 'avatar',

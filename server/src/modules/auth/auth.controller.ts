@@ -95,17 +95,18 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = await this.authService.googleLogin(req, ip);
-      if (userData['user'].refreshToken) {
-        response.cookie('token', userData['user'].refreshToken, {
-          maxAge: 60 * 24 * 68 * 68 * 1000,
-          httpOnly: true,
-          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-        });
+      const userData = this.authService.googleLogin(req, ip, 'googleId');
+      if (!userData['user'].refreshToken) {
+        return 'No user refreshToken from google';
       }
+      response.cookie('token', userData['user'].refreshToken, {
+        maxAge: 60 * 24 * 68 * 68 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+      });
       return userData;
     } catch (error) {
-      console.log(error?.message);
+      console.log('googleAuthRedirect controller error', error?.message);
     }
   }
 
@@ -123,7 +124,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = await this.authService.facebookleLogin(req, ip);
+      const userData = this.authService.facebookLogin(req, ip, 'facebookId');
       response.cookie('token', userData['user'].refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,
@@ -149,7 +150,59 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = await this.authService.vkontakteleLogin(req, ip);
+      const userData = this.authService.vkontakteLogin(req, ip, 'vkontakteId');
+      response.cookie('token', userData['user'].refreshToken, {
+        maxAge: 60 * 24 * 68 * 68 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+      });
+      return userData;
+    } catch (error) {
+      console.log(error?.message);
+    }
+  }
+
+  @Get('/odnoklassniki')
+  @UseGuards(AuthGuard('odnoklassniki'))
+  async odnoklassnikiLogin(): Promise<any> {
+    return HttpStatus.OK;
+  }
+
+  @Get('/odnoklassniki/redirect')
+  @UseGuards(AuthGuard('odnoklassniki'))
+  async odnoklassnikiLoginRedirect(
+    @Ip() ip: any,
+    @Req() req: any,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    try {
+      const userData = this.authService.odnoklassnikiLogin(req, ip, 'odnoklassnikiId');
+      response.cookie('token', userData['user'].refreshToken, {
+        maxAge: 60 * 24 * 68 * 68 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+      });
+      return userData;
+    } catch (error) {
+      console.log(error?.message);
+    }
+  }
+
+  @Get('/mailru')
+  @UseGuards(AuthGuard('mailru'))
+  async mailruLogin(): Promise<any> {
+    return HttpStatus.OK;
+  }
+
+  @Get('/mailru/redirect')
+  @UseGuards(AuthGuard('mailru'))
+  async mailruLoginRedirect(
+    @Ip() ip: any,
+    @Req() req: any,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    try {
+      const userData = this.authService.mailruLogin(req, ip, 'mailruId');
       response.cookie('token', userData['user'].refreshToken, {
         maxAge: 60 * 24 * 68 * 68 * 1000,
         httpOnly: true,

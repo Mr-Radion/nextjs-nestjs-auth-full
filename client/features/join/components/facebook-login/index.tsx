@@ -14,6 +14,8 @@ import styles from './index.module.sass';
 import React from 'react';
 
 export const FacebookButton: React.FC = () => {
+  const [codeSent, setCodeSent] = React.useState('');
+
   const onClickAuth = () => {
     window.open(
       'http://localhost:5000/api/auth/google',
@@ -23,18 +25,19 @@ export const FacebookButton: React.FC = () => {
   };
 
   React.useEffect(() => {
-    console.log('запуск')
-    window.addEventListener('message', ({ data, origin }) => {
-      console.log(data, origin);
-      const user: string = data;
+    console.log('запуск');
+    window.addEventListener('message', data => {
+      const user: any = data;
+      () => setCodeSent(user.data);
+      // console.log(user.data);
       if (typeof user === 'string' && user.includes('googleId')) {
         Cookies.remove('token');
         const json: any = JSON.parse(user);
         Cookies.set('token', json.accessToken);
       }
+      window.close();
     });
-    // window.close();
-  }, []);
+  }, [onClickAuth]);
 
   return (
     <div className={styles.block}>
@@ -46,6 +49,7 @@ export const FacebookButton: React.FC = () => {
       </button>
       <div className="link mt-20 cup d-ib">Enter my info manually</div>
       {/* </WhiteBlock> */}
+      <div>{codeSent}</div>
     </div>
   );
 };

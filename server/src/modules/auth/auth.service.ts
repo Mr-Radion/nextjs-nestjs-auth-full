@@ -36,36 +36,47 @@ export class AuthService {
     }
   }
 
-  // включить сюда все соц сети и обращаться из контроллеров
-  async autinficate(req: any, ip: any, setId: any) {
-    const { id, firstName, lastName, email, picture } = req.user;
-  }
-
-  async googleLogin(req: any, ip: string) {
+  async autinficateSocialNetwork(req: any, ip: any, socId: any) {
     if (!req.user) {
       return 'No user from google';
     }
 
-    const { id, firstName, lastName, email, picture } = req.user;
+    let { googleId, facebookId, vkontakteId, mailruId, odnoklassnikiId } = {
+      googleId: req.user[socId],
+      facebookId: req.user[socId],
+      vkontakteId: req.user[socId],
+      mailruId: req.user[socId],
+      odnoklassnikiId: req.user[socId],
+    };
+
+    const { firstName, lastName, email, avatar } = req.user;
 
     // Здесь googleId OR email
-    const findUser = await this.userModel.findOne({
-      where: [{ googleId: id }, { email }],
-    });
-
-    // const findUser = await this.userModel
-    //   .createQueryBuilder()
-    //   .where('googleId = :id OR email = :email', {
-    //     name: 'john',
-    //     lastName: 'doe',
-    //   })
-    //   .getMany();
+    // const findUser = await this.userModel.findOne({
+    //   where: [{ googleId, facebookId, vkontakteId, mailruId, odnoklassnikiId }, { email }],
+    // });
+    const findUser = await this.userModel
+      .createQueryBuilder('user')
+      .where(`user.${socId} = :${socId} OR user.email = :email`, {
+        googleId,
+        facebookId,
+        vkontakteId,
+        mailruId,
+        odnoklassnikiId,
+        email,
+      })
+      .getOne();
 
     // если через указанную почту ранее регистрировались с паролем, потом используют для входа через соц сеть,
-    // можно таким образом объединить данные
-    if (findUser.email && !findUser.googleId) {
-      findUser.googleId = id;
-      await this.userModel.save(findUser);
+    // можно таким образом объединить данные аккаунтов
+    if (findUser?.email && !findUser.googleId) {
+      console.log('сюда попало');
+      const obj = {};
+      for (let [key, value] of Object.entries(req.user)) {
+        Object.keys(findUser).indexOf(key) !== -1 && !findUser[key] ? (obj[key] = value) : '';
+      }
+      await this.userModel.update(findUser.id, obj);
+      console.log('сюда попало 2');
     }
 
     let createUser: any;
@@ -73,14 +84,13 @@ export class AuthService {
     // // регистрация пользователя
     if (!findUser) {
       // создание юзера
-      createUser = this.userModel.create({
-        googleId: id,
-        email,
-        firstName,
-        lastName,
-        avatar: picture,
-      });
-      await this.userModel.save(createUser);
+      createUser = new UserEntity();
+      createUser[socId] = req.user[socId];
+      createUser.email = email;
+      createUser.firstName = firstName;
+      createUser.lastName = lastName;
+      createUser.avatar = avatar;
+      await createUser.save();
 
       // добавление роли юзера
       const roleId = await this.roleService.getRoleByValue('USER');
@@ -105,99 +115,24 @@ export class AuthService {
     };
   }
 
-  async facebookleLogin(req: any, ip: string) {
-    if (!req.user) {
-      return 'No user from facebook';
-    }
-
-    const { id, email, firstName, lastName, picture } = req.user;
-
-    // поиск пользователя в базе для авторизации
-    const findUser = await this.userModel.findOne({
-      where: [{ facebookId: id }, { email }],
-    });
-
-    // объединение аккаунтов, добавлением недостающих данных из фейсбука в существующий аккаунт
-    if (findUser.email && !findUser.googleId) {
-      if (findUser.firstName && findUser.lastName && findUser.avatar)
-        await this.userModel.update({ email }, { facebookId: id });
-      if (!findUser.firstName && !findUser.lastName && !findUser.avatar && picture)
-        await this.userModel.update(
-          { email },
-          { facebookId: id, firstName, lastName, avatar: picture },
-        );
-      if (!findUser.firstName && !findUser.lastName && findUser.avatar)
-        await this.userModel.update({ email }, { facebookId: id, firstName, lastName });
-      if (!findUser.firstName && findUser.lastName && !findUser.avatar && picture)
-        await this.userModel.update({ email }, { facebookId: id, firstName, avatar: picture });
-      if (findUser.firstName && !findUser.lastName && !findUser.avatar && picture)
-        await this.userModel.update({ email }, { facebookId: id, lastName, avatar: picture });
-      if (!findUser.firstName && findUser.lastName && findUser.avatar)
-        await this.userModel.update({ email }, { facebookId: id, firstName });
-      if (findUser.firstName && !findUser.lastName && findUser.avatar)
-        await this.userModel.update({ email }, { facebookId: id, lastName });
-      if (findUser.firstName && findUser.lastName && !findUser.avatar && picture)
-        await this.userModel.update({ email }, { facebookId: id, avatar: picture });
-    }
-
-    // (firstName && lastName && avatar) facebookId
-    // (!firstName && !lastName && !avatar) firstName, lastName, avatar
-    // (!firstName && !lastName && avatar) firstName, lastName
-    // (!firstName && lastName && !avatar) firstName, avatar
-    // (firstName && !lastName && !avatar) lastName, avatar
-    // (!firstName && lastName && avatar) firstName
-    // (firstName && !lastName && avatar) lastName
-    // (firstName && lastName && !avatar) avatar
-
-    // TODO: нужно сравнить, если в findUser какие либо свойства находящиеся в req.user пустые, то сформировать
-    // массив из этих данных req.user и добавить их методом update ибо методом save пользователь перемещается вниз таблицы
-    // но надо проверять только те свойства, которые есть в и в req.user и в findUser
-    // заменив того монстра навверху и продублировав для гугла
-    // трансформировать объекты в массив, чтобы перебрать
-    // updateUser = req.user.filter((data) => findUser.some((elem) => elem.key === data.key && !elem.value))
-    // updateUser - трансформировать в объект
-    // updateUser = Object.assign({}, updateUser)
-    // await this.userModel.update({ email }, updateUser);
-
-    let createUser: any;
-
-    // регистрация пользователя
-    if (!findUser) {
-      // создание юзера
-      createUser = this.userModel.create({
-        facebookId: id,
-        email,
-        firstName,
-        lastName,
-        avatar: picture,
-      });
-      await this.userModel.save(createUser);
-
-      // добавление роли юзера
-      const roleId = await this.roleService.getRoleByValue('USER');
-      let commonUsRol = new UserRolesEntity();
-      commonUsRol.roleId = roleId.id;
-      commonUsRol.userId = createUser.id;
-      await commonUsRol.save();
-    }
-
-    if (findUser.banned || createUser.banned)
-      throw new UnauthorizedException({
-        message: `Вы забанены ${findUser.banReason || createUser.banReason}`,
-      });
-
-    // сохранение и выдача токенов
-    const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
-    return {
-      statusCode: HttpStatus.OK,
-      message: 'User information from facebook',
-      // user: req.user,
-      user: userDataAndTokens,
-    };
+  googleLogin(req: any, ip: string, socId: any) {
+    this.autinficateSocialNetwork(req, ip, socId);
   }
 
-  vkontakteleLogin(req: any, ip: string) {
-    console.log(req.user);
+  facebookLogin(req: any, ip: string, socId: any) {
+    this.autinficateSocialNetwork(req, ip, socId);
+  }
+
+  vkontakteLogin(req: any, ip: string, socId: any) {
+    this.autinficateSocialNetwork(req, ip, socId);
+  }
+
+  odnoklassnikiLogin(req: any, ip: string, socId: any) {
+    this.autinficateSocialNetwork(req, ip, socId);
+  }
+
+  mailruLogin(req: any, ip: string, socId: any) {
+    this.autinficateSocialNetwork(req, ip, socId);
   }
 
   async logout(refreshToken: string) {

@@ -5,6 +5,9 @@ export class UserDto {
   id: string;
   facebookId: string;
   googleId: string;
+  vkontakteId: string;
+  odnoklassnikiId: string;
+  mailruId: string;
   roles: [string];
   isActivated: boolean;
   constructor(model) {
@@ -16,6 +19,9 @@ export class UserDto {
     // model.googleId ? (this.googleId = model.googleId) : '';
     this.facebookId = model.facebookId;
     this.googleId = model.googleId;
+    this.vkontakteId = model.vkontakteId;
+    this.odnoklassnikiId = model.odnoklassnikiId;
+    this.mailruId = model.mailruId;
     this.roles = model.roles;
     this.isActivated = model.isActivated;
   }
