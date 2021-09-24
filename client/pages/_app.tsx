@@ -1,18 +1,16 @@
 // import DevTools from 'mobx-react-devtools';
-import { Context, store } from '../features/common/store';
+// import { Context, store } from '../features/common/store';
 
 export default function App({ Component, pageProps }) {
   return (
     <>
-      <Context.Provider
-        value={{
+      {/* <Context.Provider  */} {/* производит неоднократные лишние ререндеры */}
+      {/* value={{
           store,
         }}
-      >
-        <Component {...pageProps}>
-          {/* <DevTools /> */}
-        </Component>
-      </Context.Provider>
+      > */}
+      <Component {...pageProps}>{/* <DevTools /> */}</Component>
+      {/* </Context.Provider> */}
     </>
   );
 }

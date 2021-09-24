@@ -38,7 +38,7 @@ export class AuthService {
 
   async autinficateSocialNetwork(req: any, ip: any, socId: any) {
     if (!req.user) {
-      return 'No user from google';
+      return `No user from ${req.user.provider}`;
     }
 
     let { googleId, facebookId, vkontakteId, mailruId, odnoklassnikiId } = {
@@ -108,7 +108,7 @@ export class AuthService {
 
     return {
       statusCode: HttpStatus.OK,
-      message: 'User information from google',
+      message: `User information from ${req.user.provider}`,
       user: userDataAndTokens,
     };
   }

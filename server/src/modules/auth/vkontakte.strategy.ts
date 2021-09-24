@@ -21,13 +21,14 @@ export class VkontakteStrategy extends PassportStrategy(Strategy, 'vkontakte') {
     done: (err: any, user?: any, info?: any) => void,
   ): Promise<any> {
     console.log(profile);
-    const { name, emails, photos, id } = profile;
+    const { name, emails, photos, id, provider } = profile;
     const user = {
       vkontakteId: id,
       email: emails[0]?.value ?? null,
-      avatar: photos?.values,
+      avatar: photos[0].value,
       firstName: name?.givenName,
       lastName: name?.familyName,
+      provider,
       accessToken,
     };
     done(null, user);

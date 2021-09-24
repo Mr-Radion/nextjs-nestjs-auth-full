@@ -1,55 +1,42 @@
-// export const FacebookButton = () => (
-//   <div>
-//     <button>{'facebook button'}</button>
-//   </div>
-// );
-
 import clsx from 'clsx';
-import Cookies from 'js-cookie';
-// import { WhiteBlock } from '../../WhiteBlock';
-// import { Button } from '../../Button';
-// import { StepInfo } from '../../StepInfo';
-
+// import Cookies from 'js-cookie';
 import styles from './index.module.sass';
 import React from 'react';
+import { API_URL } from '../../../../lib/http';
 
 export const FacebookButton: React.FC = () => {
-  const [codeSent, setCodeSent] = React.useState('');
+  const [codeSent, setCodeSent] = React.useState({});
 
   const onClickAuth = () => {
     window.open(
-      'http://localhost:5000/api/auth/google',
+      `${API_URL}/api/auth/facebook`,
       'Auth',
       'width=500,height=500,status=yes,toolbar=no,menubar=no,location=no',
     );
+    if (typeof window !== 'undefined') {
+      window.addEventListener('message', e => {
+        if (e.origin !== API_URL) return;
+        const userData: any = JSON.parse(e.data);
+        if (userData) setCodeSent(userData);
+        // if (userData.user.includes('facebookId')) {
+        //   Cookies.remove('token');
+        //   Cookies.set('token', userData.user.accessToken);
+        // }
+        return;
+      });
+    }
   };
 
-  React.useEffect(() => {
-    console.log('запуск');
-    window.addEventListener('message', data => {
-      const user: any = data;
-      () => setCodeSent(user.data);
-      // console.log(user.data);
-      if (typeof user === 'string' && user.includes('googleId')) {
-        Cookies.remove('token');
-        const json: any = JSON.parse(user);
-        Cookies.set('token', json.accessToken);
-      }
-      window.close();
-    });
-  }, [onClickAuth]);
+  console.log(codeSent);
 
   return (
     <div className={styles.block}>
-      {/* <WhiteBlock className={clsx('m-auto mt-40', styles.whiteBlock)}> */}
       <button onClick={onClickAuth} className={clsx(styles.button, 'd-i-flex align-items-center')}>
-        <img className="d-ib mr-10" src="/static/github.svg" />
         Import from Facebook
-        <img className="d-ib ml-10" src="/static/arrow.svg" />
       </button>
       <div className="link mt-20 cup d-ib">Enter my info manually</div>
-      {/* </WhiteBlock> */}
-      <div>{codeSent}</div>
+      {/* <div>{codeSent}</div> */}
+      {/* <iframe src="http://localhost:5000/api/auth/google" frameBorder="0"></iframe> */}
     </div>
   );
 };

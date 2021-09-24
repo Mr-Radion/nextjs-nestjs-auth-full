@@ -2,11 +2,12 @@ import axios from 'axios';
 import { AuthResponse } from '../../types';
 // import { store } from '../../features/common/store';
 
-export const API_URL = `http://localhost:5000/api`;
+export const API_URL =
+  process.env.API_URL || process.env.NODE_ENV == 'development' ? `http://localhost:5000` : '';
 
 const $api = axios.create({
-  withCredentials: true,  // чтобы к каждому запросу куки цеплялись автоматически
-  baseURL: API_URL,
+  withCredentials: true, // чтобы к каждому запросу куки цеплялись автоматически
+  baseURL: `${API_URL}/api`,
 });
 
 // при каждом запросе на сервер мы вытаскиваем текущий access токен сохраненный в куки и отправляем на сервер для аутенфикации
@@ -28,7 +29,7 @@ $api.interceptors.response.use(
     if (error.response.status == 401 && error.config && !error.config._isRetry) {
       originalRequest._isRetry = true;
       try {
-        const response = await axios.get<AuthResponse>(`${API_URL}/auth/refresh`, {
+        const response = await axios.get<AuthResponse>(`${API_URL}/api/auth/refresh`, {
           withCredentials: true,
         });
         localStorage.setItem('token', response.data.accessToken);

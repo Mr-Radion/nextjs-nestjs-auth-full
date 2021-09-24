@@ -2,15 +2,28 @@
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:jsx-a11y/recommended",
+    "plugin:import/typescript",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
   ],
-  "plugins": ["@typescript-eslint"],
+  "plugins": [
+    "@typescript-eslint", // yarn module "@typescript-eslint/eslint-plugin"
+    "react", // yarn module "eslint-plugin-react"
+    "react-hooks", // yarn module "eslint-plugin-react-hooks"
+    // ESLint code formatting plugin
+    "prettier", // yarn module "eslint-plugin-prettier"
+    "jest",
+    "import" // yarn module "eslint-plugin-import"
+  ],
   "env": {
     "es6": true,
     "browser": true,
+    "es2021": true,
     "jest": true,
     "node": true
   },
+  "root": true,
   "rules": {
     "react/require-default-props": "off",
     "no-plusplus": "off",
@@ -36,58 +49,60 @@
     "react/prop-types": "off",
     "react-hooks/exhaustive-deps": "off",
     "import/prefer-default-export": "off",
-    "prettier/prettier": ["error", {
-      "endOfLine":"auto"
-    }],
-    "import/no-extraneous-dependencies": [
+    "prettier/prettier": [
       "error",
       {
-        "devDependencies": ["test/**"],
-        "optionalDependencies": false,
-        "peerDependencies": false
+        "endOfLine": "auto"
       }
     ],
+    // "import/no-extraneous-dependencies": [
+    //   "error",
+    //   { "devDependencies": false, "optionalDependencies": false, "peerDependencies": false }
+    // ],
+    "import/no-extraneous-dependencies": "off",
     "quotes": [
       2,
       "single",
       {
-          "avoidEscape": true
+        "avoidEscape": true
       }
     ],
     "react/react-in-jsx-scope": "off",
     "react/jsx-filename-extension": [
       1,
       {
-        "extensions": [
-          ".js",
-          ".jsx",
-          ".ts",
-          ".tsx"
-        ]
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
       }
     ]
   },
   "settings": {
-      "import/parsers": {
-          "@typescript-eslint/parser": [
-              ".js",
-              ".jsx",
-              ".ts",
-              ".tsx"
-          ]
+    "import/parsers": {
+      "@typescript-eslint/parser": [".js", ".jsx", ".ts", ".tsx"]
+    },
+    "import/resolver": {
+      "babel-module": {},
+      "typescript": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
       },
-      "import/resolver": {
-          "babel-module": {},
-          "typescript": {
-            "extensions": [".js", ".jsx", ".ts", ".tsx"]
-          },
-          "node": {
-            "extensions": [".js", ".jsx", ".ts", ".tsx"],
-            "moduleDirectory": ["node_modules", "pages/, features/, lib/, ui/"]
-          }
-      },
-      "react": {
-          "version": "detect"
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"],
+        "moduleDirectory": ["node_modules", "pages/, features/, lib/, ui/"]
       }
+    },
+    "react": {
+      "version": "detect"
+    }
+  },
+  "parserOptions": {
+    // "createDefaultProgram": true
+      "ecmaFeatures": {
+          "jsx": true
+      },
+      // Allows for the parsing of modern ECMAScript features
+      "ecmaVersion": 2020,
+      // Allows for the use of imports
+      "sourceType": "module",
+      // https://blog.geographer.fr/eslint-parser-services, https://www.robertcooper.me/using-eslint-and-prettier-in-a-typescript-project
+      "project": "./tsconfig.json"
   }
 }

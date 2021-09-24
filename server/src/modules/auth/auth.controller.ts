@@ -106,7 +106,11 @@ export class AuthController {
           secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
         });
       }
-      return userData;
+      response.send(
+        `<script>window.opener.postMessage('${JSON.stringify(
+          userData,
+        )}', '*');window.close()</script>`,
+      );
     } catch (error) {
       console.log('googleAuthRedirect controller error', error?.message);
     }
@@ -126,9 +130,9 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = this.authService.facebookLogin(req, ip, 'facebookId');
+      const userData = await this.authService.facebookLogin(req, ip, 'facebookId');
       if (!userData['user'].refreshToken) {
-        return 'No user refreshToken from google';
+        return 'No user refreshToken from facebook';
       }
       if (userData) {
         response.cookie('token', userData['user'].refreshToken, {
@@ -137,9 +141,13 @@ export class AuthController {
           secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
         });
       }
-      return userData;
+      response.send(
+        `<script>window.opener.postMessage('${JSON.stringify(
+          userData,
+        )}', '*');window.close()</script>`,
+      );
     } catch (error) {
-      console.log('/facebook/redirect', error?.message);
+      console.log('/facebook/redirect controller error', error?.message);
     }
   }
 
@@ -157,9 +165,9 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = this.authService.vkontakteLogin(req, ip, 'vkontakteId');
+      const userData = await this.authService.vkontakteLogin(req, ip, 'vkontakteId');
       if (!userData['user'].refreshToken) {
-        return 'No user refreshToken from google';
+        return 'No user refreshToken from vkontakte';
       }
       if (userData) {
         response.cookie('token', userData['user'].refreshToken, {
@@ -168,9 +176,13 @@ export class AuthController {
           secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
         });
       }
-      return userData;
+      response.send(
+        `<script>window.opener.postMessage('${JSON.stringify(
+          userData,
+        )}', '*');window.close()</script>`,
+      );
     } catch (error) {
-      console.log(error?.message);
+      console.log('/vkontakte/redirect controller error', error?.message);
     }
   }
 
@@ -188,9 +200,9 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = this.authService.odnoklassnikiLogin(req, ip, 'odnoklassnikiId');
+      const userData = await this.authService.odnoklassnikiLogin(req, ip, 'odnoklassnikiId');
       if (!userData['user'].refreshToken) {
-        return 'No user refreshToken from google';
+        return 'No user refreshToken from odnoklassniki';
       }
       if (userData) {
         response.cookie('token', userData['user'].refreshToken, {
@@ -199,9 +211,13 @@ export class AuthController {
           secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
         });
       }
-      return userData;
+      response.send(
+        `<script>window.opener.postMessage('${JSON.stringify(
+          userData,
+        )}', '*');window.close()</script>`,
+      );
     } catch (error) {
-      console.log(error?.message);
+      console.log('/odnoklassniki/redirect controller error', error?.message);
     }
   }
 
@@ -219,9 +235,9 @@ export class AuthController {
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = this.authService.mailruLogin(req, ip, 'mailruId');
+      const userData = await this.authService.mailruLogin(req, ip, 'mailruId');
       if (!userData['user'].refreshToken) {
-        return 'No user refreshToken from google';
+        return 'No user refreshToken from mailru';
       }
       if (userData) {
         response.cookie('token', userData['user'].refreshToken, {
@@ -230,9 +246,13 @@ export class AuthController {
           secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
         });
       }
-      return userData;
+      response.send(
+        `<script>window.opener.postMessage('${JSON.stringify(
+          userData,
+        )}', '*');window.close()</script>`,
+      );
     } catch (error) {
-      console.log(error?.message);
+      console.log('/mailru/redirect controller error', error?.message);
     }
   }
 
