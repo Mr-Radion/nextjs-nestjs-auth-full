@@ -1,17 +1,13 @@
-// import styles from '../styles/Home.module.css'
+import Link from 'next/link';
 import { MainLayot } from '../features/common/components';
-import {
-  LoginForm,
-  FacebookButton,
-  FacebookButtonReact
-} from '../features/join';
 
 export default function Home() {
   return (
     <MainLayot>
-      <LoginForm />
-      <FacebookButton />
-      <FacebookButtonReact />
+      <div>Главная</div>
+      <Link href="/join">
+        <a>Войти</a>
+      </Link>
     </MainLayot>
   );
 }

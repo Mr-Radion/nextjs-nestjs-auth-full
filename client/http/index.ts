@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { AuthResponse } from '../../types';
+import { AuthResponse } from '../types';
+import Cookies from 'js-cookie';
 // import { store } from '../../features/common/store';
 
 export const API_URL =
@@ -10,10 +11,11 @@ const $api = axios.create({
   baseURL: `${API_URL}/api`,
 });
 
-// при каждом запросе на сервер мы вытаскиваем текущий access токен сохраненный в куки и отправляем на сервер для аутенфикации
+// при каждом запросе на сервер мы вытаскиваем текущий "access" токен сохраненный в куки и отправляем на сервер для аутенфикации
+// access токен актуален всего 30 минут, поэтому это более безопасно, если комбинировать с одновременной проверкой refresh tokena через сессии
 $api.interceptors.request.use(config => {
   // config.withCredentials = true;
-  config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
+  config.headers.Authorization = `Bearer ${Cookies.get('token-access')}`;
   return config;
 });
 
@@ -32,7 +34,9 @@ $api.interceptors.response.use(
         const response = await axios.get<AuthResponse>(`${API_URL}/api/auth/refresh`, {
           withCredentials: true,
         });
-        localStorage.setItem('token', response.data.accessToken);
+        Cookies.set('token-access', response.data.user.accessToken, {
+          expires: 1 / 24 / 2, // 30 min
+        });
         return $api.request(originalRequest);
       } catch (e) {
         console.log('НЕ АВТОРИЗОВАН');

@@ -2,7 +2,7 @@ import { IUser, AuthResponse } from '../../../types';
 import { makeAutoObservable } from 'mobx';
 import { AuthService } from '../api';
 import axios from 'axios';
-import { API_URL } from '../../../lib/http';
+import { API_URL } from '../../../http';
 
 export class AuthStore {
   user = {} as IUser;
@@ -29,9 +29,9 @@ export class AuthStore {
     try {
       const response = await AuthService.login(email, password);
       console.log(response);
-      localStorage.setItem('token', response.data.accessToken);
+      localStorage.setItem('token', response.data.user.accessToken);
       this.setAuth(true);
-      this.setUser(response.data.user);
+      this.setUser(response.data.user.user);
     } catch (e) {
       console.log(e.response?.data?.message);
     }
@@ -41,9 +41,9 @@ export class AuthStore {
     try {
       const response = await AuthService.registration(email, password);
       console.log(response);
-      localStorage.setItem('token', response.data.accessToken);
+      localStorage.setItem('token', response.data.user.accessToken);
       this.setAuth(true);
-      this.setUser(response.data.user);
+      this.setUser(response.data.user.user);
     } catch (e) {
       console.log(e.response?.data?.message);
     }
@@ -68,9 +68,9 @@ export class AuthStore {
         withCredentials: true,
       });
       console.log(response);
-      localStorage.setItem('token', response.data.accessToken);
+      localStorage.setItem('token', response.data.user.accessToken);
       this.setAuth(true);
-      this.setUser(response.data.user);
+      this.setUser(response.data.user.user);
     } catch (e) {
       console.log(e.response?.data?.message);
     } finally {

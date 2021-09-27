@@ -1,4 +1,4 @@
-import $api from '../../../lib/http';
+import $api from '../../../http';
 import { AxiosResponse } from 'axios';
 import { AuthResponse } from '../../../types';
 
