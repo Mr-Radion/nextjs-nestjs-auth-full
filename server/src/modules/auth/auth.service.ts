@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@n
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../users/entity';
@@ -9,6 +10,10 @@ import { UserDto } from '../users/dto';
 import { RefreshTokenSessionsEntity } from './entity';
 import { UserRolesEntity } from '../roles/entity';
 import { RoleService } from '../roles/roles.service';
+import { MailService } from '../mail/mail.service';
+// import passfather from 'passfather';
+import { generate } from 'generate-password';
+import { UserAgentType } from '../../utils/has-user-agent';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +25,7 @@ export class AuthService {
     private readonly userRolesModel: Repository<UserRolesEntity>,
     private roleService: RoleService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async login(userData: any, ip: string) {
@@ -88,6 +94,27 @@ export class AuthService {
       createUser.firstName = firstName;
       createUser.lastName = lastName;
       createUser.avatar = avatar;
+
+      // генерируем пароль и хешируем, чтобы пользователь мог войти в систему при необходимости через пару логина и пароль
+      // отправляем пару на почту вместе с просьбой активировать аккаунт
+      let generatedPassword: string;
+      if (!createUser.password) {
+        generatedPassword = generate({
+          length: 10,
+          numbers: true,
+          symbols: true,
+        });
+        console.log('generatedPassword1', generatedPassword);
+        const hashPassword = await bcrypt.hash(generatedPassword, 5);
+        createUser.password = hashPassword;
+      }
+      const activationLink = uuidv4();
+      console.log('generatedPassword2', generatedPassword);
+      await this.mailService.sendActivationMail(
+        email,
+        `${process.env.API_URL}/api/auth/activate/${activationLink}`,
+        generatedPassword,
+      );
       await createUser.save();
 
       // добавление роли юзера
@@ -107,9 +134,7 @@ export class AuthService {
     const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
 
     return {
-      statusCode: HttpStatus.OK,
-      message: `User information from ${req.user.provider}`,
-      user: userDataAndTokens,
+      ...userDataAndTokens,
     };
   }
 
@@ -180,12 +205,18 @@ export class AuthService {
       );
       userData.roles = userRoles.role;
     }
+
     const userDto = new UserDto(userData); // оставляем только id, facebookId, googleId, email, roles, isActivated
     const tokens = await this.generateToken({ ...userDto });
-    await this.saveToken(userDto.id, tokens.refreshToken, ip);
+    await this.saveToken(userData.id, tokens.refreshToken, ip);
     return {
-      ...tokens,
-      user: userDto,
+      statusCode: HttpStatus.OK,
+      message: 'User information',
+      user: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken, // refresh token нужно настроить в ответ body только для мобильных приложений
+        user: userDto,
+      },
     };
   }
 
@@ -196,7 +227,11 @@ export class AuthService {
 
   async generateToken(user: any) {
     const payload = { email: user.email, id: user.id, roles: user.roles };
-    const accessToken = this.jwtService.sign(payload);
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_ACCESS_SECRET,
+      expiresIn: '30m',
+    });
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_SECRET,
       expiresIn: '60d',

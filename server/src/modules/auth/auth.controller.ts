@@ -10,15 +10,15 @@ import {
   Ip,
   Req,
   HttpStatus,
+  Session,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 // import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Cookies } from 'src/lib/custom-decorators/cookies';
-// import { Roles } from 'src/lib/custom-decorators/roles-auth';
+import { Cookies } from 'src/custom-decorators/cookies';
 import { CreateUserDto } from '../users/dto';
 import { AuthService } from './auth.service';
-// import { RolesGuard } from './roles.guard';
-// import { RefreshTokenSessionsEntity } from './entity/refresh.token.entity';
+import { hasUserAgent } from '../../utils/has-user-agent';
 
 // @ApiTags('Авторизация')
 @Controller('auth')
@@ -30,18 +30,29 @@ export class AuthController {
   @Post('/login')
   async login(
     @Ip() ip: any,
+    @Req() req: Request,
     @Body() dto: CreateUserDto,
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      console.log(dto, 'auth', 21);
       const userData = await this.authService.login(dto, ip);
-      response.cookie('token', userData.refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
-      });
-      return userData;
+      // if (userData.user.isActivated === false) {
+      //   return 'подтвердите email';
+      // }
+      req.session['userId'] = userData.user.user.id;
+      req.session['roles'] = userData.user.user.roles;
+      if (userData && !hasUserAgent(req).mobile) {
+        response.clearCookie('token');
+        response.cookie('token', userData.user.refreshToken, {
+          maxAge: 60 * 24 * 60 * 60 * 1000, // 60 days unix-time
+          httpOnly: true,
+          secure: process.env.NODE_ENV !== 'development',
+          sameSite: true,
+        });
+        delete userData.user.refreshToken;
+        return userData;
+      }
+      if (userData && hasUserAgent(req).mobile) return userData;
     } catch (error) {
       console.log(error);
     }
@@ -55,7 +66,7 @@ export class AuthController {
     try {
       const authLink = await this.authService.activateAccount(activationLink);
       if (authLink.isActivated) {
-        return { url: 'http://localhost:3000' };
+        return { url: process.env.CLIENT_URL };
       }
     } catch (error) {
       console.log(error);
@@ -67,17 +78,24 @@ export class AuthController {
   @Post('/refresh')
   async refresh(
     @Ip() ip: any,
+    @Req() req: any,
     @Cookies('token') refreshtoken: string,
     @Res({ passthrough: true }) response: any,
   ) {
     try {
-      const userData = await this.authService.refreshToken(refreshtoken, ip);
-      response.cookie('token', userData.refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
-      });
-      return userData;
+      const userData = await this.authService.refreshToken(refreshtoken, ip); // на стороне клиента лучше сохранять access token, а в серверном куки остается рефреш
+      if (userData && !hasUserAgent(req).mobile) {
+        response.clearCookie('token');
+        response.cookie('token', userData.user.refreshToken, {
+          maxAge: 60 * 24 * 60 * 60 * 1000,
+          httpOnly: true, // управляет доступностью, через js document, true делает недоступным для js клиента
+          sameSite: true, // defense against some classes of cross-site request forgery (CSRF) attacks
+          secure: process.env.NODE_ENV !== 'development', // true делает куки невидимым при http соединениях и гарантирует передачу куки, только через https соединение
+        });
+        delete userData.user.refreshToken;
+        return userData;
+      }
+      if (userData && hasUserAgent(req).mobile) return userData;
     } catch (error) {
       console.log(error);
     }
@@ -96,21 +114,28 @@ export class AuthController {
   ) {
     try {
       const userData = await this.authService.googleLogin(req, ip, 'googleId');
+      req.session['userId'] = userData['user'].user.id;
+      req.session['roles'] = userData['user'].user.roles;
       if (!userData['user'].refreshToken) {
         return 'No user refreshToken from google';
       }
-      if (userData) {
+      if (userData && !hasUserAgent(req).mobile) {
+        response.clearCookie('token');
         response.cookie('token', userData['user'].refreshToken, {
-          maxAge: 60 * 24 * 68 * 68 * 1000,
+          maxAge: 60 * 24 * 60 * 60 * 1000,
           httpOnly: true,
-          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+          sameSite: true,
+          secure: process.env.NODE_ENV !== 'development',
         });
+        delete userData['user'].refreshToken;
+        response.send(
+          `<script>window.opener.postMessage('${JSON.stringify(
+            userData,
+          )}', '*');window.close()</script>`,
+        );
       }
-      response.send(
-        `<script>window.opener.postMessage('${JSON.stringify(
-          userData,
-        )}', '*');window.close()</script>`,
-      );
+      // для мобильных приложений с refrest token
+      if (userData && hasUserAgent(req).mobile) return userData;
     } catch (error) {
       console.log('googleAuthRedirect controller error', error?.message);
     }
@@ -131,21 +156,28 @@ export class AuthController {
   ) {
     try {
       const userData = await this.authService.facebookLogin(req, ip, 'facebookId');
+      req.session.userId = userData['user'].user.id;
+      req.session['roles'] = userData['user'].user.roles;
       if (!userData['user'].refreshToken) {
         return 'No user refreshToken from facebook';
       }
-      if (userData) {
+      if (userData && !hasUserAgent(req).mobile) {
+        response.clearCookie('token');
         response.cookie('token', userData['user'].refreshToken, {
-          maxAge: 60 * 24 * 68 * 68 * 1000,
+          maxAge: 60 * 24 * 60 * 60 * 1000,
           httpOnly: true,
-          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+          sameSite: true,
+          secure: process.env.NODE_ENV !== 'development',
         });
+        delete userData['user'].refreshToken;
+        response.send(
+          `<script>window.opener.postMessage('${JSON.stringify(
+            userData,
+          )}', '*');window.close()</script>`,
+        );
       }
-      response.send(
-        `<script>window.opener.postMessage('${JSON.stringify(
-          userData,
-        )}', '*');window.close()</script>`,
-      );
+      // для мобильных приложений с refrest token
+      if (userData && hasUserAgent(req).mobile) return userData;
     } catch (error) {
       console.log('/facebook/redirect controller error', error?.message);
     }
@@ -166,21 +198,28 @@ export class AuthController {
   ) {
     try {
       const userData = await this.authService.vkontakteLogin(req, ip, 'vkontakteId');
+      req.session.userId = userData['user'].user.id;
+      req.session['roles'] = userData['user'].user.roles;
       if (!userData['user'].refreshToken) {
         return 'No user refreshToken from vkontakte';
       }
-      if (userData) {
+      if (userData && !hasUserAgent(req).mobile) {
+        response.clearCookie('token');
         response.cookie('token', userData['user'].refreshToken, {
-          maxAge: 60 * 24 * 68 * 68 * 1000,
+          maxAge: 60 * 24 * 60 * 60 * 1000,
           httpOnly: true,
-          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+          sameSite: true,
+          secure: process.env.NODE_ENV !== 'development',
         });
+        delete userData['user'].refreshToken;
+        response.send(
+          `<script>window.opener.postMessage('${JSON.stringify(
+            userData,
+          )}', '*');window.close()</script>`,
+        );
       }
-      response.send(
-        `<script>window.opener.postMessage('${JSON.stringify(
-          userData,
-        )}', '*');window.close()</script>`,
-      );
+      // для мобильных приложений с refrest token
+      if (userData && hasUserAgent(req).mobile) return userData;
     } catch (error) {
       console.log('/vkontakte/redirect controller error', error?.message);
     }
@@ -201,21 +240,28 @@ export class AuthController {
   ) {
     try {
       const userData = await this.authService.odnoklassnikiLogin(req, ip, 'odnoklassnikiId');
+      req.session.userId = userData['user'].user.id;
+      req.session['roles'] = userData['user'].user.roles;
       if (!userData['user'].refreshToken) {
         return 'No user refreshToken from odnoklassniki';
       }
-      if (userData) {
+      if (userData && !hasUserAgent(req).mobile) {
+        response.clearCookie('token');
         response.cookie('token', userData['user'].refreshToken, {
-          maxAge: 60 * 24 * 68 * 68 * 1000,
+          maxAge: 60 * 24 * 60 * 60 * 1000,
           httpOnly: true,
-          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+          sameSite: true,
+          secure: process.env.NODE_ENV !== 'development',
         });
+        delete userData['user'].refreshToken;
+        response.send(
+          `<script>window.opener.postMessage('${JSON.stringify(
+            userData,
+          )}', '*');window.close()</script>`,
+        );
       }
-      response.send(
-        `<script>window.opener.postMessage('${JSON.stringify(
-          userData,
-        )}', '*');window.close()</script>`,
-      );
+      // для мобильных приложений с refrest token
+      if (userData && hasUserAgent(req).mobile) return userData;
     } catch (error) {
       console.log('/odnoklassniki/redirect controller error', error?.message);
     }
@@ -236,21 +282,28 @@ export class AuthController {
   ) {
     try {
       const userData = await this.authService.mailruLogin(req, ip, 'mailruId');
+      req.session.userId = userData['user'].user.id;
+      req.session['roles'] = userData['user'].user.roles;
       if (!userData['user'].refreshToken) {
         return 'No user refreshToken from mailru';
       }
-      if (userData) {
+      if (userData && !hasUserAgent(req).mobile) {
+        response.clearCookie('token');
         response.cookie('token', userData['user'].refreshToken, {
-          maxAge: 60 * 24 * 68 * 68 * 1000,
+          maxAge: 60 * 24 * 60 * 60 * 1000,
           httpOnly: true,
-          secure: process.env.NODE_ENV !== 'development', // управляют видимостью cookie в браузере
+          sameSite: true,
+          secure: process.env.NODE_ENV !== 'development',
         });
+        delete userData['user'].refreshToken;
+        response.send(
+          `<script>window.opener.postMessage('${JSON.stringify(
+            userData,
+          )}', '*');window.close()</script>`,
+        );
       }
-      response.send(
-        `<script>window.opener.postMessage('${JSON.stringify(
-          userData,
-        )}', '*');window.close()</script>`,
-      );
+      // для мобильных приложений с refrest token
+      if (userData && hasUserAgent(req).mobile) return userData;
     } catch (error) {
       console.log('/mailru/redirect controller error', error?.message);
     }
@@ -259,9 +312,18 @@ export class AuthController {
   // @ApiOperation({ summary: 'Выход из приложения' })
   // @ApiResponse({ status: 200 })
   @Post('/logout')
-  async logout(@Cookies('token') refreshtoken: string, @Res({ passthrough: true }) response: any) {
+  async logout(
+    @Session() session: Record<string, any>,
+    @Cookies('token') refreshtoken: string,
+    @Res({ passthrough: true }) response: any,
+  ) {
     try {
       const token = await this.authService.logout(refreshtoken);
+      session.destroy(err => {
+        console.log(err);
+        return false;
+      });
+      response.clearCookie('sid');
       response.clearCookie('token');
       return token;
     } catch (error) {

@@ -7,7 +7,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-// import { v4 as uuidv4 } from 'uuid';
 // import { Exclude, plainToClass } from 'class-transformer';
 import { UserRolesEntity } from '../../roles/entity';
 // import { ApiModelProperty } from '@nestjs/swagger';
@@ -100,30 +99,9 @@ export class UserEntity extends BaseEntity {
   })
   public updated_at: Date;
 
-  // @CreateDateColumn({
-  //   name: 'creation_at',
-  //   type: 'timestamptz',
-  //   default: () => 'CURRENT_TIMESTAMP',
-  // })
-  // creationAt: Date;
-
-  // @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  // updatedAt: Date;
-
-  // @ManyToOne(() => UserEntity, (user: UserEntity) => user.posts)
-
   @OneToMany(() => UserRolesEntity, (userRolesEntity: UserRolesEntity) => userRolesEntity.user)
   public userRolesEntity!: UserRolesEntity[];
 
   // @Column({ nullable: true })
   // public roles: string;
-
-  // constructor(partial: Partial<UserEntity>) {
-  //   super();
-  //   if (partial) {
-  //     Object.assign(this, partial);
-  //     default values
-  //     this.id = this.id || uuidv4();
-  //   }
-  // }
 }

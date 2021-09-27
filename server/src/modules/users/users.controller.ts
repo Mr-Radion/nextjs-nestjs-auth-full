@@ -14,11 +14,12 @@ import {
   Ip,
   UploadedFile,
   UseInterceptors,
+  Session,
   // UsePipes,
 } from '@nestjs/common';
 // import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request, Express } from 'express';
-import { Roles } from 'src/lib/custom-decorators/roles-auth';
+import { Roles } from 'src/custom-decorators/roles-auth';
 import { JwtAutGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import {
@@ -43,6 +44,7 @@ import {
   // ApiImplicitFile,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { redis } from '../../redis';
 // import { ValidationPipe } from 'src/lib/pipes/validation.pipe';
 
 @ApiTags('Пользователи')
@@ -52,12 +54,15 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение всех пользователей' })
   // @ApiResponse({ status: 200, type: [UserEntity] })
-  // @UseGuards(JwtAutGuard)
+  @UseGuards(JwtAutGuard)
   // @Roles('ADMIN', 'MANAGER')
   // @UseGuards(RolesGuard)
   @Get()
-  getAll(@Query() query: UserQueryDto) {
+  getAll(@Session() session: Record<string, any>, @Query() query: UserQueryDto) {
     try {
+      // кол-во просмотров
+      session['visits'] = session['visits'] ? session['visits'] + 1 : 1;
+      console.log(session['visits']);
       return this.userService.getAllUsers(query);
     } catch (error) {
       console.log(error);
@@ -72,7 +77,6 @@ export class UsersController {
   @Get('/getuser/:id')
   getOne(@Param('id') id: string) {
     try {
-      console.log(id, 47);
       return this.userService.getOneUser(id);
     } catch (error) {
       console.log(error);
@@ -83,8 +87,9 @@ export class UsersController {
   // @ApiResponse({ status: 200, type: UserEntity })
   // @UseGuards(JwtAutGuard)
   @Get('/getme')
-  getMe(@Req() req: Request) {
+  async getMe(@Req() req: Request) {
     try {
+      // const userId = await redis.get(`${id}`);  // альтернативный способ получить id, которое фиксируется при входе пользователя в систему, через сессии
       return this.userService.getMeAccount(req.headers.authorization);
     } catch (error) {
       console.log(error);

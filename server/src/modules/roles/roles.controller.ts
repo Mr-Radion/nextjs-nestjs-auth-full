@@ -4,7 +4,7 @@ import { RoleService } from './roles.service';
 import { CreateRoleDto } from './dto';
 // import { Roles } from 'src/lib/custom-decorators/roles-auth';
 // import { JwtAutGuard } from '../auth/jwt-auth.guard';
-import { Auth } from 'src/lib/custom-decorators/auth.decorator';
+import { Auth } from 'src/custom-decorators/auth.decorator';
 import { RolesType } from './roles.types';
 // import { RolesGuard } from '../auth/roles.guard';
 // import { RoleEntity } from './entity/roles.entity';

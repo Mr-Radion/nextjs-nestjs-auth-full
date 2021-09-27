@@ -4,7 +4,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class MailService {
   constructor(private readonly mailerService: MailerService) {}
-  async sendActivationMail(toEmail, link): Promise<void> {
+  async sendActivationMail(toEmail: string, link: string, generatedPassword?: any): Promise<void> {
     try {
       this.mailerService.sendMail({
         to: toEmail, // list of receivers
@@ -13,13 +13,18 @@ export class MailService {
         text: '', // plaintext body
         html: `
                 <div>
+                  ${
+                    generatedPassword
+                      ? `<div><p>Ваш логин: ${toEmail}</p><p>Ваш пароль: ${generatedPassword}</p><div>`
+                      : ''
+                  }
                   <h1>Для активации перейдите по ссылке</h1>
                   <a href="${link}">${link}</a>
                 </div>
               `,
       });
     } catch (error) {
-      console.log(error, 22);
+      console.log('Ошибка при отправки почты: ', error.message);
     }
   }
 }
