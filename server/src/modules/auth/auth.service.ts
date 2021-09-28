@@ -21,7 +21,7 @@ export class AuthService {
     @InjectRepository(RefreshTokenSessionsEntity)
     private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
     @InjectRepository(UserRolesEntity)
-    private readonly userRolesModel: Repository<UserRolesEntity>,
+    // private readonly userRolesModel: Repository<UserRolesEntity>,
     private roleService: RoleService,
     private jwtService: JwtService,
     private mailService: MailService,

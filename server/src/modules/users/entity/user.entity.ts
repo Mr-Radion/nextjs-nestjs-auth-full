@@ -29,6 +29,9 @@ export class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'number', nullable: true })
+  numberOfUniqueViews: number;
+
   @Column({ type: 'text', unique: true, nullable: true })
   nickname: string;
 
@@ -49,7 +52,7 @@ export class UserEntity extends BaseEntity {
   // @Column()
   // searchIn: Position;
 
-  @Column({default: false})
+  @Column({ default: false })
   registered: boolean;
 
   @Column({ default: false })

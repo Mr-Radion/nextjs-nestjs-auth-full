@@ -6,7 +6,6 @@ import {
   Param,
   Post,
   Put,
-  Patch,
   Query,
   Res,
   UseGuards,
@@ -17,22 +16,19 @@ import {
   Session,
   // UsePipes,
 } from '@nestjs/common';
-// import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Request, Express } from 'express';
+import { Request } from 'express';
 import { Roles } from 'src/custom-decorators/roles-auth';
-import { JwtAutGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+import { JwtAutGuard, RolesGuard } from '../auth/guards';
 import {
   CreateUserDto,
   AddRoleDto,
   BanUserDto,
-  UpdateUserDto,
+  // UpdateUserDto,
   RoleQueryDto,
   UserQueryDto,
   // UserDto,
 } from './dto';
 import { UsersService } from './users.service';
-import { UserEntity } from './entity/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiResponse,
@@ -44,7 +40,10 @@ import {
   // ApiImplicitFile,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { redis } from '../../redis';
+// import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+// import { redis } from '../../redis';
+// import { RolesType } from '../roles/roles.types';
+// import { UserEntity } from './entity/user.entity';
 // import { ValidationPipe } from 'src/lib/pipes/validation.pipe';
 
 @ApiTags('Пользователи')
@@ -54,7 +53,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение всех пользователей' })
   // @ApiResponse({ status: 200, type: [UserEntity] })
-  @UseGuards(JwtAutGuard)
+  // @UseGuards(JwtAutGuard)
   // @Roles('ADMIN', 'MANAGER')
   // @UseGuards(RolesGuard)
   @Get()
@@ -90,6 +89,7 @@ export class UsersController {
   async getMe(@Req() req: Request) {
     try {
       // const userId = await redis.get(`${id}`);  // альтернативный способ получить id, которое фиксируется при входе пользователя в систему, через сессии
+      // if(req.session['userId'])  // альтернативный способ доступа к этому запросу, только залогиненному пользователю
       return this.userService.getMeAccount(req.headers.authorization);
     } catch (error) {
       console.log(error);
@@ -198,8 +198,10 @@ export class UsersController {
   // @Roles('ADMIN')
   // @UseGuards(RolesGuard)
   @Put('/role/:userid')
-  addRole(@Param('userid') userid: string, @Body() dto: AddRoleDto) {
+  addRole(@Req() req: Request, @Param('userid') userid: string, @Body() dto: AddRoleDto) {
     try {
+      // альтернативный вариант проверки роли, через сессии
+      // if (req.session['roles'].some(role => role.value === RolesType.ADMIN))
       return this.userService.addRoleUser(userid, dto);
     } catch (error) {
       console.log(error);

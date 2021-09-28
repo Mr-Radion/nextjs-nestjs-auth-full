@@ -19,6 +19,7 @@ export interface IUser {
   googleId: string | null;
   id: number | null;
   isActivated: boolean;
+  registered: boolean;
   lastName: string | null;
   mailruId: string | null;
   vkontakteId: string | null;
@@ -27,4 +28,5 @@ export interface IUser {
   phone: string | null;
   roles: Role[];
   password?: string | null;
+  numberOfUniqueViews?: number | null;
 }

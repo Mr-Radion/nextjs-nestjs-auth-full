@@ -124,6 +124,7 @@ export class UsersService {
   }
 
   async getOneUser(id: string): Promise<UserEntity | undefined> {
+    // количество уникальных просмотров фиксировать в сессиях и сохранять в redis/db
     return this.userModel.findOneOrFail(id);
   }
 

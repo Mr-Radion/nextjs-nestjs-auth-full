@@ -29,10 +29,10 @@ async function bootstrap() {
     app.use(cookieParser());
     app.use(
       session({
-        // For this store to work, you need to connect service Redis to the OS, default port is: 6379
-        // store: new RedisStore({
-        //   client: redis as any,
-        // }),
+        // For this store to work, you need to connect service Redis to the OS, default port is: 6379, for ubuntu 20 sudo systemctl restart redis-server
+        store: new RedisStore({
+          client: redis as any,
+        }),
         secret: process.env.SESSION_ID_SECRET,
         name: 'sid', // defaults to 'connect.sid'.
         resave: false, // we will not save to the database if the session data has not changed

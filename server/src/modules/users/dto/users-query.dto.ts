@@ -1,4 +1,4 @@
 export class UserQueryDto {
-  readonly limit?: string;
-  readonly offset?: string;
+  readonly limit?: number;
+  readonly take?: number;
 }

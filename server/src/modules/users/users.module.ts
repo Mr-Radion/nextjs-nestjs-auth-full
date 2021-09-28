@@ -9,7 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entity';
 import { RefreshTokenSessionsEntity } from '../auth/entity';
 import { FileModule } from '../file/file.module';
-import { Roles } from '../roles/entity/roles.entity';
+// import { Roles } from '../roles/entity/roles.entity';
 
 @Module({
   controllers: [UsersController],

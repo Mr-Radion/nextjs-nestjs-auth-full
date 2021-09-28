@@ -4,20 +4,32 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
-// import { PassportModule } from '@nestjs/passport';
 import { UserEntity } from '../users/entity';
 import { RefreshTokenSessionsEntity } from './entity';
 import { RoleEntity, UserRolesEntity } from '../roles/entity';
-import { GoogleStrategy } from './google.strategy';
-import { FacebookStrategy } from './facebook.strategy';
-// import { RolesModule } from '../roles/roles.module';
+import {
+  FacebookStrategy,
+  GoogleStrategy,
+  VkontakteStrategy,
+  OdnoklassnikiStrategy,
+  LocalStrategy,
+} from './strategies';
 import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
-// import { LocalStrategy } from './local.strategy';
+// import { PassportModule } from '@nestjs/passport';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, FacebookStrategy, RoleService, MailService],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    FacebookStrategy,
+    VkontakteStrategy,
+    OdnoklassnikiStrategy,
+    RoleService,
+    MailService,
+    LocalStrategy,
+  ],
   imports: [
     forwardRef(() => UsersModule),
     // PassportModule,
@@ -30,8 +42,8 @@ import { MailService } from '../mail/mail.service';
     TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity, UserRolesEntity, RoleEntity]),
   ],
   exports: [
-    AuthService, 
-    JwtModule, 
+    AuthService,
+    JwtModule,
     // LocalStrategy
   ],
 })
