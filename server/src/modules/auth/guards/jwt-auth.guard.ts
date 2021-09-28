@@ -13,7 +13,7 @@ import { AuthService } from '../auth.service';
 import { hasUserAgent } from 'src/utils/has-user-agent';
 
 @Injectable()
-export class JwtAutGuard implements CanActivate {
+export class JwtAuthGuard implements CanActivate {
   constructor(private jwtService: JwtService, private authService: AuthService) {}
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const req = context.switchToHttp().getRequest();

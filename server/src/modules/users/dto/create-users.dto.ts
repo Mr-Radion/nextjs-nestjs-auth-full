@@ -2,13 +2,6 @@
 import { IsString, Length, IsEmail, IsNotEmpty, Matches } from 'class-validator';
 
 export class CreateUserDto {
-  // @ApiModelProperty({
-  // 	example: 'Scorage',
-  // 	description: 'Имя пользователя'
-  // })
-  // @Length(5, 20)
-  // @IsNotEmpty()
-  readonly nickname?: string;
   // @ApiProperty({ example: 'user@mail.ru', description: 'Почтовый адрес' })
   // @IsString({ message: 'Должно быть строкой' })
   // @IsEmail({}, { message: 'Некорректный email' })
@@ -22,4 +15,11 @@ export class CreateUserDto {
   //   message: 'Password too weak',
   // })
   readonly password: string;
+  // @ApiModelProperty({
+  // 	example: 'Scorage',
+  // 	description: 'Имя пользователя'
+  // })
+  // @Length(5, 20)
+  // @IsNotEmpty()
+  readonly nickname?: string;
 }

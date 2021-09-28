@@ -4,7 +4,7 @@
 export default function App({ Component, pageProps }) {
   return (
     <>
-      {/* <Context.Provider  */} {/* производит неоднократные лишние ререндеры */}
+      {/* <Context.Provider  */}
       {/* value={{
           store,
         }}

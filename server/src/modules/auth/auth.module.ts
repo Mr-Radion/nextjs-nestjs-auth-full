@@ -13,6 +13,7 @@ import {
   VkontakteStrategy,
   OdnoklassnikiStrategy,
   LocalStrategy,
+  JwtStrategy,
 } from './strategies';
 import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
@@ -29,6 +30,7 @@ import { MailService } from '../mail/mail.service';
     RoleService,
     MailService,
     LocalStrategy,
+    JwtStrategy,
   ],
   imports: [
     forwardRef(() => UsersModule),

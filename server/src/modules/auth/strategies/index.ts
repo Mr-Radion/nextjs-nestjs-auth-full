@@ -4,3 +4,4 @@ export { LocalStrategy } from './local.strategy';
 export { MailruStrategy } from './mailru.strategy';
 export { OdnoklassnikiStrategy } from './odnoklassniki.strategy';
 export { VkontakteStrategy } from './vkontakte.strategy';
+export { JwtStrategy } from './local-jwt.strategy';

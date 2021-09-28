@@ -7,6 +7,7 @@ import * as Store from 'connect-redis';
 // import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { redis } from './redis';
+import { HttpExceptionFilter } from './exceptions/http-exception.filter';
 
 async function bootstrap() {
   try {
@@ -26,6 +27,7 @@ async function bootstrap() {
       },
     });
     app.setGlobalPrefix('api');
+    app.useGlobalFilters(new HttpExceptionFilter());
     app.use(cookieParser());
     app.use(
       session({

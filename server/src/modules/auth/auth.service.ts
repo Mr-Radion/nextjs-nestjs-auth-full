@@ -262,7 +262,7 @@ export class AuthService {
     return tokenData;
   }
 
-  private async validateUser(userData: any): Promise<any> {
+  async validateUser(userData: any): Promise<any> {
     try {
       const user = await this.getUserByEmail(userData.email);
       if (!user)

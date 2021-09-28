@@ -18,7 +18,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Roles } from 'src/custom-decorators/roles-auth';
-import { JwtAutGuard, RolesGuard } from '../auth/guards';
+import { JwtAuthGuard, LocalJwtAuthGuard, RolesGuard } from '../auth/guards';
 import {
   CreateUserDto,
   AddRoleDto,
@@ -70,7 +70,8 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение пользователя по id' })
   // @ApiResponse({ status: 200, type: UserEntity })
-  @UseGuards(JwtAutGuard)
+  // @UseGuards(LocalJwtAuthGuard)  // using custom local.strategy => local-auth.guard using PassportStrategy
+  @UseGuards(JwtAuthGuard)
   @Roles('ADMIN', 'MANAGER')
   @UseGuards(RolesGuard)
   @Get('/getuser/:id')

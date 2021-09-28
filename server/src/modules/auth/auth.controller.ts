@@ -14,11 +14,12 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-// import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Cookies } from 'src/custom-decorators/cookies';
 import { CreateUserDto } from '../users/dto';
 import { AuthService } from './auth.service';
-import { hasUserAgent } from '../../utils/has-user-agent';
+import { hasUserAgent } from 'src/utils/has-user-agent';
+// import { LocalAuthGuard } from './guards';
+// import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 // @ApiTags('Авторизация')
 @Controller('auth')
@@ -27,6 +28,11 @@ export class AuthController {
 
   // @ApiOperation({ summary: 'Вход в аккаунт' })
   // @ApiResponse({ status: 200, type: [RefreshTokenSessionsEntity] })
+  // about AuthGuard('local') and LocalAuthGuard
+  // 1. The route handler will only be invoked if the user has been validated
+  // 2. The req parameter will contain a user property (populated by Passport during the passport-local authentication flow)
+  // @UseGuards(AuthGuard('local'))  // using local.strategy using PassportStrategy
+  // @UseGuards(LocalAuthGuard) // using custom local.strategy => local-auth.guard using PassportStrategy
   @Post('/login')
   async login(
     @Ip() ip: any,

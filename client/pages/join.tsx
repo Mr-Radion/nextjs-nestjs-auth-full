@@ -11,7 +11,7 @@ export default function Join() {
     <MainLayot>
       <LoginForm />
       <FacebookButton />
-      {/* <FacebookButtonReact /> */}
+      {/* <FacebookButtonReact /> */} {/* serverless authentication option */}
     </MainLayot>
   );
 }
