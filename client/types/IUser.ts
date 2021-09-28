@@ -1,3 +1,11 @@
+export interface Role {
+  created_at: string;
+  description: string;
+  id: number;
+  updated_at: string;
+  value: string;
+}
+
 export interface IUser {
   activationLink: null;
   avatar: string | null;
@@ -17,12 +25,6 @@ export interface IUser {
   nickname: string | null;
   odnoklassnikiId: string | null;
   phone: string | null;
-  roles: {
-    created_at: string;
-    description: string;
-    id: number;
-    updated_at: string;
-    value: string;
-  };
+  roles: Role[];
   password?: string | null;
 }

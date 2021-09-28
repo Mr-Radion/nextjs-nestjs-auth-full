@@ -41,11 +41,9 @@ export class Roles extends BaseEntity {
   @OneToMany(() => UserRolesEntity, (userRolesEntity: UserRolesEntity) => userRolesEntity.role)
   public userRolesEntity!: UserRolesEntity[];
 
-  // constructor(partial: Partial<RoleEntity>) {
-  //   super();
-  //   if (partial) {
-  //     Object.assign(this, partial);
-  //     // this.id = this.id || uuidv4();
-  //   }
-  // }
+  // @ManyToMany(type => UserEntity, {
+  //   cascade: true, // using cascades to automatically save related objects
+  // })
+  // @JoinTable()
+  // public users: UserEntity[];
 }

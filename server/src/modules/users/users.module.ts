@@ -9,12 +9,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entity';
 import { RefreshTokenSessionsEntity } from '../auth/entity';
 import { FileModule } from '../file/file.module';
+import { Roles } from '../roles/entity/roles.entity';
 
 @Module({
   controllers: [UsersController],
   providers: [UsersService],
   imports: [
-    TypeOrmModule.forFeature([UserEntity, UserRolesEntity, RefreshTokenSessionsEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      UserRolesEntity,
+      RefreshTokenSessionsEntity,
+      // Roles  // if ManyToMany cascade relation
+    ]),
     RolesModule,
     forwardRef(() => AuthModule),
     MailModule,

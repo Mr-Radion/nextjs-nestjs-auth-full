@@ -4,7 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Connection } from 'typeorm';
 import { UserEntity } from '../users/entity';
 import { UserDto } from '../users/dto';
 import { RefreshTokenSessionsEntity } from './entity';
@@ -13,7 +13,6 @@ import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
 // import passfather from 'passfather';
 import { generate } from 'generate-password';
-import { UserAgentType } from '../../utils/has-user-agent';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +25,7 @@ export class AuthService {
     private roleService: RoleService,
     private jwtService: JwtService,
     private mailService: MailService,
+    private connection: Connection, // TypeORM transactions.
   ) {}
 
   async login(userData: any, ip: string) {
@@ -57,7 +57,7 @@ export class AuthService {
 
     const { firstName, lastName, email, avatar } = req.user;
 
-    // Здесь googleId OR email
+    // here google or email
     // const findUser = await this.userModel.findOne({
     //   where: [{ googleId, facebookId, vkontakteId, mailruId, odnoklassnikiId }, { email }],
     // });
@@ -73,8 +73,7 @@ export class AuthService {
       })
       .getOne();
 
-    // если через указанную почту ранее регистрировались с паролем, потом используют для входа через соц сеть,
-    // можно таким образом объединить данные аккаунтов
+    // if you previously registered with a password through the specified mail, then use it to log in through the social network, combining data
     if (findUser?.email && !findUser.googleId) {
       const obj = {};
       for (let [key, value] of Object.entries(req.user)) {
@@ -85,9 +84,9 @@ export class AuthService {
 
     let createUser: any;
 
-    // // регистрация пользователя
+    // user registration
     if (!findUser) {
-      // создание юзера
+      // user creation
       createUser = new UserEntity();
       createUser[socId] = req.user[socId];
       createUser.email = email;
@@ -95,8 +94,8 @@ export class AuthService {
       createUser.lastName = lastName;
       createUser.avatar = avatar;
 
-      // генерируем пароль и хешируем, чтобы пользователь мог войти в систему при необходимости через пару логина и пароль
-      // отправляем пару на почту вместе с просьбой активировать аккаунт
+      // we generate a password and hash so that the user can enter the system if necessary through a pair of login and password
+      // we send a couple to the mail together with a request to activate the account
       let generatedPassword: string;
       if (!createUser.password) {
         generatedPassword = generate({
@@ -117,7 +116,7 @@ export class AuthService {
       );
       await createUser.save();
 
-      // добавление роли юзера
+      // adding user role
       const roleId = await this.roleService.getRoleByValue('USER');
       let commonUsRol = new UserRolesEntity();
       commonUsRol.roleId = roleId.id;
@@ -130,7 +129,7 @@ export class AuthService {
         message: `Вы забанены ${findUser.banReason || createUser.banReason}`,
       });
 
-    // сохранение и выдача токенов
+    // preservation and issuance of tokens
     const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
 
     return {
@@ -195,18 +194,22 @@ export class AuthService {
       throw new UnauthorizedException({
         message: 'Пользователь с данным ID отсутствует в базе',
       });
-    // вытаскиваем роли для результатов
+
+    // pulling out roles for results
     if (!userData.roles) {
-      const userRoles = await this.userRolesModel.findOneOrFail(
-        { userId: userData.id },
-        {
-          relations: ['role'],
-        },
-      );
-      userData.roles = userRoles.role;
+      const userRoles: any = await this.connection
+        .getRepository(UserRolesEntity)
+        .createQueryBuilder('user-roles')
+        .innerJoinAndSelect('user-roles.role', 'role')
+        .where('user-roles.userId = :id', {
+          id: userData.id,
+        })
+        .getMany();
+
+      userData.roles = userRoles.map(userRoles => userRoles.role);
     }
 
-    const userDto = new UserDto(userData); // оставляем только id, facebookId, googleId, email, roles, isActivated
+    const userDto = new UserDto(userData); // leave merely id, facebookId, googleId, email, roles, isActivated
     const tokens = await this.generateToken({ ...userDto });
     await this.saveToken(userData.id, tokens.refreshToken, ip);
     return {
@@ -214,7 +217,7 @@ export class AuthService {
       message: 'User information',
       user: {
         accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken, // refresh token нужно настроить в ответ body только для мобильных приложений
+        refreshToken: tokens.refreshToken, // refresh token only for mobile app
         user: userDto,
       },
     };
@@ -244,7 +247,7 @@ export class AuthService {
 
   async saveToken(userId: any, refreshToken: string, ip: string) {
     const hasToken = await this.tokenModel.findByIds(userId);
-    // создаем токен с нуля для нового пользователя или после удаления старого токена
+    // create a token from scratch for a new user or after deleting an old token
     if (!hasToken) {
       // const createdToken = new RefreshTokenSessionsEntity({ user: userId, refreshToken });
       const createdToken = this.tokenModel.create({ user: userId, refreshToken, ip });

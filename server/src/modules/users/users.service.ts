@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Connection } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { RoleService } from './../roles/roles.service';
@@ -34,6 +34,7 @@ export class UsersService {
     private roleService: RoleService,
     private jwtService: JwtService,
     private mailService: MailService,
+    private connection: Connection, // TypeORM transactions.
   ) {}
 
   async createUser(dto: CreateUserDto, ip: string): Promise<any & UserDto> {
@@ -66,12 +67,23 @@ export class UsersService {
     commonUsRol.userId = user.id;
     await commonUsRol.save();
 
+    // creating with many to many relationship
+    // await this.connection.createQueryBuilder().relation(UserEntity, 'roles').of(createdUser).add(roleId);
+
     await this.mailService.sendActivationMail(
       dto.email,
       `${process.env.API_URL}/api/auth/activate/${activationLink}`,
     );
     const userDataAndTokens = await this.authService.tokenSession(createdUser, ip);
     return userDataAndTokens;
+  }
+
+  async createManyUsers(users: CreateUserDto[]) {
+    await this.connection.transaction(async manager => {
+      await manager.save(users[0]);
+      await manager.save(users[1]);
+      await manager.save(users[2]);
+    });
   }
 
   // ПРОТЕСТИРОВАТЬ!!!
@@ -90,16 +102,25 @@ export class UsersService {
     return updateUser ? true : false;
   }
 
-  // ДОБАВИТЬ СОРТИРОВКУ В НЕСКОЛЬКИХ ВАРИАНТАХ
   async getAllUsers(query: UserQueryDto): Promise<CreateUserDto[]> {
-    const qb = this.userModel.createQueryBuilder('u');
+    const qb = this.userModel.createQueryBuilder('user');
 
-    // qb.limit(query.limit || 0);
-    // qb.take(query.take || 10);
+    qb.limit(Number(query.limit) || 0);
+    // how many users to skip
+    // qb.skip(Number(query.skip) || 0);
+    // number of users
+    qb.take(Number(query.take) || 10);
+    qb.orderBy({
+      'user.id': 'ASC', // ascending
+      // 'user.created_at': 'DESC',
+    });
+    // qb.orderBy(
+    //   '(CASE WHEN user.nickname IS NULL THEN user.firstName ELSE user.nickname END)',
+    // );
+    qb.where('user.registered = :registered', { registered: true });
+    qb.where('user.isActivated = :isActivated', { isActivated: true });
 
-    return this.userModel.find();
-    // TODO: о сортировке, транзакциях разузнать
-    // https://coderoad.ru/61625105/%D0%9F%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%B8%D0%B9-%D1%82%D0%B8%D0%BF-%D1%81%D0%BE%D1%80%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BA%D0%B8-typeorm
+    return qb.getMany();
   }
 
   async getOneUser(id: string): Promise<UserEntity | undefined> {
@@ -114,11 +135,11 @@ export class UsersService {
 
   async deleteUserOne(userId: string) {
     if (!userId) throw new Error('id не указан');
-    // удаляем связанные роли
+    // remove related roles
     await this.userRolesModel.delete({
       userId: Number(userId),
     });
-    // удаляем пользователя
+    // delete user
     const deletedUser = await this.userModel.delete(userId);
     return deletedUser;
   }
@@ -131,13 +152,13 @@ export class UsersService {
     // if (!user || !role)
     //   throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
     if (!user) throw new HttpException('Пользователь не найден', HttpStatus.NOT_FOUND);
-    // удаление всех ролей пользователя
+    // removing all user roles
     await this.userRolesModel.delete(userId);
-    // баним пользователя
+    // ban user
     user.banned = true;
-    // добавляем описание бана
+    // add a description of the ban
     user.banReason = dto.banReason;
-    // удаляем рефреш токен
+    // remove the refresh token
     await this.tokenModel.delete(userId);
     return user.save();
   }
@@ -149,16 +170,16 @@ export class UsersService {
     const role = await this.roleService.getRoleByValue('USER');
     if (!user || !role)
       throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
-    // добавляем роль USER пользователю и сохраняем в бд
+    // add the USER role to the user and save it to the database
     const userRoles = await this.userRolesModel
       .create({ userId: Number(userId), roleId: role.id })
       .save();
-    // отменяем бан и стираем его причину
+    // we cancel the ban and erase its reason
     user.banned = false;
     user.banReason = null;
-    // сохраняем изменения в бд
+    // save changes to the database
     const userResult = await user.save();
-    // // вытаскиваем результат вместе с информацией о добавленной роли
+    // we pull out result along with information about the added role
     // const userResult = await this.userModel.findOneOrFail(
     //   { id: Number(userId) },
     //   {
@@ -174,6 +195,7 @@ export class UsersService {
   async addRoleUser(userId: string, dto: AddRoleDto) {
     const user = await this.userModel.findOne({ id: Number(userId) });
     const role = await this.roleService.getRoleByValue(dto.value);
+
     if (!user || !role)
       throw new HttpException('Пользователь или роль не найдены', HttpStatus.NOT_FOUND);
     if (user.banned)
@@ -181,18 +203,34 @@ export class UsersService {
         `Данный пользователь забанен, разблокируйте его прежде чем добавлять новые роли`,
         HttpStatus.METHOD_NOT_ALLOWED,
       );
-    // проверяем наличие данной роли у пользователя по id роли
-    const hasRole = user.userRolesEntity.some(item => item.id.toString() === role.id.toString());
-    if (hasRole)
+
+    // check whether the user has a given role by role id
+    const userRoles: any = await this.connection
+      .getRepository(UserRolesEntity)
+      .createQueryBuilder('user-roles')
+      .innerJoinAndSelect('user-roles.role', 'role')
+      .where('user-roles.userId = :userId', {
+        userId,
+      })
+      .getMany();
+
+    const hasRole = userRoles.some(item => item.role.id.toString() === role.id.toString());
+    if (hasRole) {
       throw new HttpException(
         `роль ${dto.value} уже была добавлена данному пользователю`,
         HttpStatus.METHOD_NOT_ALLOWED,
       );
-    // добавляем указанную роль пользователю
+    }
+
+    // add the specified role to the user
     const userRoleUpdate = await this.userRolesModel
       .create({ userId: Number(userId), roleId: role.id })
       .save();
-    return userRoleUpdate;
+
+    return {
+      value: dto.value,
+      ...userRoleUpdate,
+    };
   }
 
   async removeRoleUser(query: RoleQueryDto) {
@@ -206,7 +244,7 @@ export class UsersService {
         'У пользователя не осталось больше ролей для удаления',
         HttpStatus.NOT_FOUND,
       );
-    // удаляем конкретную роль пользователя
+    // remove a specific user role
     const deletedUserRole = await this.userRolesModel.delete({
       userId: Number(query.userId),
       roleId: role.id,

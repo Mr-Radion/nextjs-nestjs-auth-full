@@ -19,7 +19,7 @@ export class RolesController {
   // @UseGuards(JwtAutGuard)
   // @Roles('ADMIN')
   // @UseGuards(RolesGuard)
-  @Auth(RolesType.USER)
+  // @Auth(RolesType.USER)
   @Post()
   create(@Body() dto: CreateRoleDto) {
     try {

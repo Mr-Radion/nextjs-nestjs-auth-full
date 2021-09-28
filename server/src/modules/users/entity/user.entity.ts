@@ -1,3 +1,4 @@
+// import { Roles } from 'src/modules/roles/entity/roles.entity';
 import {
   Entity,
   Column,
@@ -47,6 +48,9 @@ export class UserEntity extends BaseEntity {
   // @ApiModelProperty({ description: 'The search location of the User' })
   // @Column()
   // searchIn: Position;
+
+  @Column({default: false})
+  registered: boolean;
 
   @Column({ default: false })
   isActivated: boolean;
@@ -102,6 +106,9 @@ export class UserEntity extends BaseEntity {
   @OneToMany(() => UserRolesEntity, (userRolesEntity: UserRolesEntity) => userRolesEntity.user)
   public userRolesEntity!: UserRolesEntity[];
 
-  // @Column({ nullable: true })
-  // public roles: string;
+  // @ManyToMany(type => Roles, {
+  //   cascade: true, // using cascades to automatically save related objects
+  // })
+  // @JoinTable()
+  // public roles: Roles[];
 }
