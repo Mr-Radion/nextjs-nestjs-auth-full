@@ -35,7 +35,7 @@ yarn start:dev
 
 Api is located at [http://localhost:5000](http://localhost:5000).
 
-Features of the token preservation strategy
+### Features of the token preservation strategy
 
 - at each login, registration and authentication, a pair of tokens is generated, we save the access token in the client cookie and the refresh token in the server cookie;
 - for each browser, including different browser accounts, its own refresh token, which is stored in the database and server cookies, allows you to simultaneously log in from different browsers and devices without automatically all leaving user account other browsers;

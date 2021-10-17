@@ -168,7 +168,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Удаление пользователя' })
   // @ApiResponse({ status: 200 })
-  @Auth(RolesType.ADMIN)
+  // @Auth(RolesType.ADMIN)
   @Delete('remove/:id')
   removeUserOne(@Param('id') id: string) {
     try {
@@ -204,7 +204,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Добавить роль пользователю' })
   // @ApiResponse({ status: 200 })
-  @Auth(RolesType.ADMIN)
+  // @Auth(RolesType.ADMIN)
   @Put('/role/:userid')
   addRole(@Req() req: Request, @Param('userid') userid: string, @Body() dto: AddRoleDto) {
     try {

@@ -13,6 +13,7 @@ import {
   Session,
   Put,
   UnauthorizedException,
+  HttpException,
 } from '@nestjs/common';
 import { UserEntity } from '../users/entity';
 import { AuthGuard } from '@nestjs/passport';
@@ -143,6 +144,10 @@ export class AuthController {
     try {
       console.log({ body: req.body });
       console.log({ req: req });
+      // перенести для аутенфикации в соотв контроллер или тут исправить, но помнить об ощибке установления заголовка, после отправки результата
+      // req.session.userId = req.body.userId;
+      // req.session['roles'] = userDataAndTokens['user'].user.roles;
+
       const findUser = await this.userModel.findOneOrFail({ id: req.body.userId });
 
       if (findUser?.banned)
@@ -158,9 +163,6 @@ export class AuthController {
         req.headers['fingerprint'],
         req.headers['sec-ch-ua-platform'],
       );
-
-      req.session.userId = findUser.id;
-      req.session['roles'] = userDataAndTokens['user'].user.roles;
 
       if (userDataAndTokens && !hasUserAgent(req).mobile) {
         response.clearCookie('token');
@@ -178,6 +180,7 @@ export class AuthController {
       return userDataAndTokens;
     } catch (error) {
       console.log('findToken controller error', error?.message);
+      throw new HttpException(`Нету доступа`, HttpStatus.FORBIDDEN);
     }
   }
 

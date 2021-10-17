@@ -43,7 +43,13 @@ export class UsersService {
     private connection: Connection, // TypeORM transactions.
   ) {}
 
-  async createUser(dto: CreateUserDto, ip: string, ua: any, fingerprint: any, os: any): Promise<any & UserDto> {
+  async createUser(
+    dto: CreateUserDto,
+    ip: string,
+    ua: any,
+    fingerprint: any,
+    os: any,
+  ): Promise<any & UserDto> {
     if (!dto.email) {
       throw new HttpException(`Вы не ввели почту`, HttpStatus.BAD_REQUEST);
     }
@@ -160,17 +166,17 @@ export class UsersService {
     if (user) return user;
   }
 
-  async deleteUserOne(userId: string) {
+  async deleteUserOne(userId: any) {
     try {
       if (!userId) throw new Error('id не указан');
       // последовательность удаления важна, так как не удалив прежде связанные с юзером
       // записи в других таблицах, не получится удалить пользователя
-      // remove related roles
+      // remove all related roles
       await this.userRolesModel.delete({
         userId: Number(userId),
       });
       // удаляем все токены данного пользователя
-      await this.tokenModel.delete(userId);
+      await this.tokenModel.delete({ user: userId });
       // delete user
       const deletedUser = await this.userModel.delete(userId);
       return deletedUser;
@@ -179,7 +185,7 @@ export class UsersService {
     }
   }
 
-  async banUser(userId: string, dto: BanUserDto) {
+  async banUser(userId: any, dto: BanUserDto) {
     const user = await this.userModel.findOneOrFail({ id: Number(userId) });
     if (user.banned)
       throw new HttpException(`Данный пользователь уже забанен`, HttpStatus.METHOD_NOT_ALLOWED);
@@ -194,11 +200,11 @@ export class UsersService {
     // add a description of the ban
     user.banReason = dto.banReason;
     // remove the refresh token ТУТ НУЖНО ИЗМЕНИТЬ В СВЯЗИ С МНОЖЕСТВОМ РЕФРЕШ ТОКЕНОВ ПОД КАЖДЫЙ БРАУЗЕР, УДАЛЯЯ СРАЗУ НЕСКОЛЬКО ТОКЕНОВ
-    await this.tokenModel.delete(userId);
+    await this.tokenModel.delete({ user: userId });
     return user.save();
   }
 
-  async unlockUser(userId: string) {
+  async unlockUser(userId: any) {
     const user = await this.userModel.findOneOrFail({ id: Number(userId) });
     if (!user.banned)
       throw new HttpException(`Данный пользователь не забанен`, HttpStatus.METHOD_NOT_ALLOWED);
@@ -227,7 +233,7 @@ export class UsersService {
     };
   }
 
-  async addRoleUser(userId: string, dto: AddRoleDto) {
+  async addRoleUser(userId: any, dto: AddRoleDto) {
     const user = await this.userModel.findOne({ id: Number(userId) });
     const role = await this.roleService.getRoleByValue(dto.value);
 
