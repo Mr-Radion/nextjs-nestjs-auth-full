@@ -22,15 +22,15 @@ export enum UserRole {
 @Entity({
   name: 'users',
   // orderBy: {
-  //   createdAt: 'ASC',
+  //   createdAt: 'ASC',  // ascending
   // },
 })
 export class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'number', nullable: true })
-  numberOfUniqueViews: number;
+  @Column({ type: 'text', nullable: true })
+  numberOfUniqueViews: string;
 
   @Column({ type: 'text', unique: true, nullable: true })
   nickname: string;

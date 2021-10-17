@@ -3,6 +3,7 @@ import { makeAutoObservable } from 'mobx';
 import { AuthService } from '../api';
 import axios from 'axios';
 import { API_URL } from '../../../http';
+import Cookies from 'js-cookie';
 
 export class AuthStore {
   user = {} as IUser;
@@ -27,12 +28,15 @@ export class AuthStore {
 
   async login(email: string, password: string) {
     try {
+      console.log('что-то началось!');
       const response = await AuthService.login(email, password);
-      console.log(response);
-      localStorage.setItem('token', response.data.user.accessToken);
+      console.log({ response });
+      Cookies.remove('token-access');
+      Cookies.set('token-access', response.data.user.accessToken);
       this.setAuth(true);
       this.setUser(response.data.user.user);
     } catch (e) {
+      console.log({ error: e });
       console.log(e.response?.data?.message);
     }
   }
@@ -41,7 +45,8 @@ export class AuthStore {
     try {
       const response = await AuthService.registration(email, password);
       console.log(response);
-      localStorage.setItem('token', response.data.user.accessToken);
+      Cookies.remove('token-access');
+      Cookies.set('token-access', response.data.user.accessToken);
       this.setAuth(true);
       this.setUser(response.data.user.user);
     } catch (e) {
@@ -53,7 +58,7 @@ export class AuthStore {
     try {
       // const response = await AuthService.logout();
       await AuthService.logout();
-      localStorage.removeItem('token');
+      Cookies.remove('token-access');
       this.setAuth(false);
       this.setUser({} as IUser);
     } catch (e) {
@@ -68,7 +73,8 @@ export class AuthStore {
         withCredentials: true,
       });
       console.log(response);
-      localStorage.setItem('token', response.data.user.accessToken);
+      Cookies.remove('token-access');
+      Cookies.set('token-access', response.data.user.accessToken);
       this.setAuth(true);
       this.setUser(response.data.user.user);
     } catch (e) {

@@ -23,11 +23,12 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
       cors: {
         credentials: true,
+        // origin: '*',
         origin: process.env.CLIENT_URL,
       },
     });
     app.setGlobalPrefix('api');
-    app.useGlobalFilters(new HttpExceptionFilter());
+    // app.useGlobalFilters(new HttpExceptionFilter());
     app.use(cookieParser());
     app.use(
       session({

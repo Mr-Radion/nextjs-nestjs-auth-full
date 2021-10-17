@@ -28,3 +28,5 @@ export const hasUserAgent = (req: Request) => {
 
   return result;
 };
+
+// https://wicg.github.io/ua-client-hints/

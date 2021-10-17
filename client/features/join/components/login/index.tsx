@@ -3,6 +3,7 @@ import { Button, Divider, TextField, Box } from '@material-ui/core';
 import { Context } from '../../../common/store';
 import { observer } from 'mobx-react-lite';
 import { FacebookButton } from '../facebook-login';
+import { GoogleButton } from '../google-login';
 
 export const LoginForm: FC = observer(() => {
   const [email, setEmail] = useState<string>('');
@@ -26,9 +27,10 @@ export const LoginForm: FC = observer(() => {
       }}
     >
       <form>
-        <Button color="primary" variant="contained" onClick={() => googleFetch()}>
+        {/* <Button color="primary" variant="contained" onClick={() => googleFetch()}>
           Google
-        </Button>
+        </Button> */}
+        <GoogleButton />
         <FacebookButton />
         {/* <input
           onChange={e => setEmail(e.target.value)}
