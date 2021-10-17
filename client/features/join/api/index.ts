@@ -1,10 +1,16 @@
 import $api from '../../../http';
 import { AxiosResponse } from 'axios';
 import { AuthResponse } from '../../../types';
+// import fingerprint from '../../../utils/fingerprint';
 
 export class AuthService {
   static async login(email: string, password: string) {
-    return $api.post<AuthResponse>('/auth/login', { email, password });
+    return $api.post<AuthResponse>('/auth/login', {
+      email,
+      password,
+      // fingerprint: await fingerprint,
+    });
+
     // const data = fetch('http://localhost:5000/api/auth/login', {
     //   method: 'Post',
     //   credentials: 'include',

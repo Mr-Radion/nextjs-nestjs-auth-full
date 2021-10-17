@@ -21,5 +21,8 @@ export class CreateUserDto {
   // })
   // @Length(5, 20)
   // @IsNotEmpty()
+
+  readonly fingerprint?: string;
+
   readonly nickname?: string;
 }

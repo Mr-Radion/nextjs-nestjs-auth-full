@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Connection } from 'typeorm';
@@ -37,7 +43,7 @@ export class UsersService {
     private connection: Connection, // TypeORM transactions.
   ) {}
 
-  async createUser(dto: CreateUserDto, ip: string): Promise<any & UserDto> {
+  async createUser(dto: CreateUserDto, ip: string, ua: any, fingerprint: any, os: any): Promise<any & UserDto> {
     if (!dto.email) {
       throw new HttpException(`Вы не ввели почту`, HttpStatus.BAD_REQUEST);
     }
@@ -74,7 +80,13 @@ export class UsersService {
       dto.email,
       `${process.env.API_URL}/api/auth/activate/${activationLink}`,
     );
-    const userDataAndTokens = await this.authService.tokenSession(createdUser, ip);
+    const userDataAndTokens = await this.authService.tokenSession(
+      createdUser,
+      ip,
+      ua,
+      fingerprint,
+      os,
+    );
     return userDataAndTokens;
   }
 
@@ -125,24 +137,46 @@ export class UsersService {
 
   async getOneUser(id: string): Promise<UserEntity | undefined> {
     // количество уникальных просмотров фиксировать в сессиях и сохранять в redis/db
-    return this.userModel.findOneOrFail(id);
+    try {
+      return this.userModel.findOneOrFail(id);
+    } catch (error) {
+      console.log('getOneUser service', error.message);
+    }
   }
 
-  async getMeAccount(token: string) {
-    const tokenCode = token.split(' ')[1];
-    const user = this.jwtService.verify(tokenCode);
-    return this.userModel.findOneOrFail({ email: user.email });
+  async getMeAccount(req: any) {
+    // const tokenCode = token.split(' ')[1];
+    // const user = this.jwtService.verify(tokenCode);
+    console.log('req.user', req.user);
+    if (!req.user) {
+      console.log('getMeAccount service: пользователь не авторизован!');
+      throw new UnauthorizedException({
+        message: 'getMeAccount service: пользователь не авторизован!',
+      });
+    }
+    console.log('req.user', req.user);
+    const user = await this.userModel.findOneOrFail({ email: req.user.email });
+    console.log({ user });
+    if (user) return user;
   }
 
   async deleteUserOne(userId: string) {
-    if (!userId) throw new Error('id не указан');
-    // remove related roles
-    await this.userRolesModel.delete({
-      userId: Number(userId),
-    });
-    // delete user
-    const deletedUser = await this.userModel.delete(userId);
-    return deletedUser;
+    try {
+      if (!userId) throw new Error('id не указан');
+      // последовательность удаления важна, так как не удалив прежде связанные с юзером
+      // записи в других таблицах, не получится удалить пользователя
+      // remove related roles
+      await this.userRolesModel.delete({
+        userId: Number(userId),
+      });
+      // удаляем все токены данного пользователя
+      await this.tokenModel.delete(userId);
+      // delete user
+      const deletedUser = await this.userModel.delete(userId);
+      return deletedUser;
+    } catch (error) {
+      console.log('deleteUserOne service', error.message);
+    }
   }
 
   async banUser(userId: string, dto: BanUserDto) {
@@ -159,7 +193,7 @@ export class UsersService {
     user.banned = true;
     // add a description of the ban
     user.banReason = dto.banReason;
-    // remove the refresh token
+    // remove the refresh token ТУТ НУЖНО ИЗМЕНИТЬ В СВЯЗИ С МНОЖЕСТВОМ РЕФРЕШ ТОКЕНОВ ПОД КАЖДЫЙ БРАУЗЕР, УДАЛЯЯ СРАЗУ НЕСКОЛЬКО ТОКЕНОВ
     await this.tokenModel.delete(userId);
     return user.save();
   }

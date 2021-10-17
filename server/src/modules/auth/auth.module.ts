@@ -10,14 +10,16 @@ import { RoleEntity, UserRolesEntity } from '../roles/entity';
 import {
   FacebookStrategy,
   GoogleStrategy,
-  VkontakteStrategy,
-  OdnoklassnikiStrategy,
+  // VkontakteStrategy,
+  // OdnoklassnikiStrategy,
+  // MailruStrategy,
   LocalStrategy,
   JwtStrategy,
 } from './strategies';
 import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
-// import { PassportModule } from '@nestjs/passport';
+import { PassportModule } from '@nestjs/passport';
+import { RolesModule } from '../roles/roles.module';
 
 @Module({
   controllers: [AuthController],
@@ -25,23 +27,25 @@ import { MailService } from '../mail/mail.service';
     AuthService,
     GoogleStrategy,
     FacebookStrategy,
-    VkontakteStrategy,
-    OdnoklassnikiStrategy,
+    // VkontakteStrategy,
+    // OdnoklassnikiStrategy,
+    // MailruStrategy,
     RoleService,
     MailService,
     LocalStrategy,
     JwtStrategy,
   ],
   imports: [
-    forwardRef(() => UsersModule),
-    // PassportModule,
+    PassportModule,
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET || 'SERCRET',
       signOptions: {
-        expiresIn: '30m',
+        expiresIn: '10m',
       },
     }),
     TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity, UserRolesEntity, RoleEntity]),
+    RolesModule,
+    forwardRef(() => UsersModule),
   ],
   exports: [
     AuthService,

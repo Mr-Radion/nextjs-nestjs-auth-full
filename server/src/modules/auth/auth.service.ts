@@ -13,6 +13,7 @@ import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
 // import passfather from 'passfather';
 import { generate } from 'generate-password';
+import { response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -20,22 +21,21 @@ export class AuthService {
     @InjectRepository(UserEntity) private readonly userModel: Repository<UserEntity>,
     @InjectRepository(RefreshTokenSessionsEntity)
     private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
-    @InjectRepository(UserRolesEntity)
-    // private readonly userRolesModel: Repository<UserRolesEntity>,
     private roleService: RoleService,
     private jwtService: JwtService,
     private mailService: MailService,
-    private connection: Connection, // TypeORM transactions.
+    private connection: Connection, // TypeORM transactions. // private readonly userRolesModel: Repository<UserRolesEntity>,
   ) {}
 
-  async login(userData: any, ip: string) {
+  async login(userData: any, ip: string, ua: any, fingerprint, os: any) {
     try {
       const user = await this.validateUser(userData);
       if (user.banned)
         throw new UnauthorizedException({
           message: `Вы забанены ${user.banReason}`,
         });
-      const userDataAndTokens = await this.tokenSession(user, ip);
+      // console.log({ fingerprint: userData.fingerprint });
+      const userDataAndTokens = await this.tokenSession(user, ip, ua, fingerprint, os);
       return userDataAndTokens;
     } catch (error) {
       throw console.log(error);
@@ -43,6 +43,7 @@ export class AuthService {
   }
 
   async autinficateSocialNetwork(req: any, ip: any, socId: any) {
+    console.log('google req2', { req });
     if (!req.user) {
       return `No user from ${req.user.provider}`;
     }
@@ -103,12 +104,10 @@ export class AuthService {
           numbers: true,
           symbols: true,
         });
-        console.log('generatedPassword1', generatedPassword);
         const hashPassword = await bcrypt.hash(generatedPassword, 5);
         createUser.password = hashPassword;
       }
       const activationLink = uuidv4();
-      console.log('generatedPassword2', generatedPassword);
       await this.mailService.sendActivationMail(
         email,
         `${process.env.API_URL}/api/auth/activate/${activationLink}`,
@@ -129,15 +128,11 @@ export class AuthService {
         message: `Вы забанены ${findUser.banReason || createUser.banReason}`,
       });
 
-    // preservation and issuance of tokens
-    const userDataAndTokens = await this.tokenSession(findUser ?? createUser, ip);
-
-    return {
-      ...userDataAndTokens,
-    };
+    return findUser ?? createUser;
   }
 
   async googleLogin(req: any, ip: string, socId: any) {
+    console.log('google req', { req });
     return this.autinficateSocialNetwork(req, ip, socId);
   }
 
@@ -172,24 +167,36 @@ export class AuthService {
     return user;
   }
 
-  async refreshToken(refreshtoken: string, ip: string) {
+  async refreshToken(
+    refreshtoken: string,
+    ip: string,
+    ua: any,
+    os: any,
+    res: any,
+    fingerprint: any,
+  ) {
     if (!refreshtoken) throw new UnauthorizedException({ message: 'Пользователь не авторизован' });
     const userData = this.validateRefreshToken(refreshtoken);
+    // если нету рефреш токена, мы не создаем через данный сервис новый, чтобы при необходимости иметь возможность удалять рефреш токен, чтобы разлогинить пользователей
     const tokenDb = await this.findToken(refreshtoken);
-    if (!userData || !tokenDb)
+    if (!tokenDb) {
+      res.clearCookie('sid');
+      res.clearCookie('token');
       throw new UnauthorizedException({
-        message: 'Рефреш токен неверный или пользователь не авторизован',
+        message:
+          'refreshToken service: рефреш токен отсутствует в базе и пользователь не авторизован',
       });
+    }
     const user = await this.userModel.findOne(userData.id);
     if (user.banned)
       throw new UnauthorizedException({
         message: `Вы забанены ${user.banReason}`,
       });
-    const userDataAndTokens = await this.tokenSession(user, ip);
+    const userDataAndTokens = await this.tokenSession(user, ip, ua, fingerprint, os);
     return userDataAndTokens;
   }
 
-  async tokenSession(userData: any, ip: string) {
+  async tokenSession(userData: any, ip: string, ua: any, fingerprint?: any, os?: any) {
     if (!userData)
       throw new UnauthorizedException({
         message: 'Пользователь с данным ID отсутствует в базе',
@@ -211,7 +218,7 @@ export class AuthService {
 
     const userDto = new UserDto(userData); // leave merely id, facebookId, googleId, email, roles, isActivated
     const tokens = await this.generateToken({ ...userDto });
-    await this.saveToken(userData.id, tokens.refreshToken, ip);
+    await this.saveToken(userData.id, tokens.refreshToken, ip, ua, os, fingerprint);
     return {
       statusCode: HttpStatus.OK,
       message: 'User information',
@@ -233,8 +240,11 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: '30m',
+      expiresIn: '10m',
     });
+    // refreshToken в куках служит подтверждением авторизации пользователя, после истечения срока access tokena,
+    // без него не получить новый access token в обновлении с помощью маршрута auth/refresh
+    //
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_SECRET,
       expiresIn: '60d',
@@ -245,20 +255,53 @@ export class AuthService {
     };
   }
 
-  async saveToken(userId: any, refreshToken: string, ip: string) {
-    const hasToken = await this.tokenModel.findByIds(userId);
+  async saveToken(
+    userId: any,
+    refreshToken: string,
+    ip: string,
+    ua: any,
+    os?: any,
+    fingerprint?: any,
+  ) {
+    if (!fingerprint) console.log('Отсутствует отпечаток браузера!');
+    const hasToken = await this.tokenModel.find({ user: userId, fingerprint });
+
     // create a token from scratch for a new user or after deleting an old token
-    if (!hasToken) {
-      // const createdToken = new RefreshTokenSessionsEntity({ user: userId, refreshToken });
-      const createdToken = this.tokenModel.create({ user: userId, refreshToken, ip });
+    if (!hasToken.length) {
+      // Ситуации когда создается новая запись с токеном, вместо обновления существующей записи
+      // 1. регистрация пользователя
+      // 2. авторизация после выхода
+      // 3. авторизация после устаревания рефреш токена
+      // - (что не случится если пользоваться ресурсом в течении 60 дн, всегда срок refresh tokena обновляется, вместе с access токеном,
+      // при выходе и входе или обновлении токенов через refresh)
+      // 4. авторизация в другом браузере
+
+      const createdToken = this.tokenModel.create({
+        user: userId,
+        refreshToken,
+        ip,
+        ua,
+        os,
+        fingerprint,
+        expiresIn: '',
+      });
+
       return await this.tokenModel.save(createdToken);
     }
-    const tokenData = await this.tokenModel.update(userId, { user: userId, refreshToken, ip });
+
+    // Ситуации когда обновляется существующая запись, вместо создания
+    // 1. Когда пользователь выполняет обновление существующего рефреш токена в браузере, из-за устаревания access tokena и получая новую пару
+    // 2. Если по каким-либо причинам программно совершен повторный вход с одного и того же браузера и одним и тем же userId, без выхода до этого,
+    // как защита от дурака
+    hasToken[0].refreshToken = refreshToken;
+    const tokenData = await this.tokenModel.save(hasToken);
+
     return tokenData;
   }
 
   async removeToken(refreshToken: string) {
-    const tokenData = await this.tokenModel.update({ refreshToken }, { refreshToken: null });
+    // const tokenData = await this.tokenModel.update({ refreshToken }, { refreshToken: null });
+    const tokenData = await this.tokenModel.delete({ refreshToken });
     return tokenData;
   }
 
@@ -286,8 +329,8 @@ export class AuthService {
       return userData;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        // this.removeToken(token);
-        throw new HttpException(`Срок действия токена истек`, HttpStatus.BAD_REQUEST);
+        this.removeToken(token);
+        throw new HttpException(`Срок действия рефреш токена истек`, HttpStatus.BAD_REQUEST);
       }
       if (error instanceof jwt.JsonWebTokenError)
         throw new HttpException(`Неверный формат рефреш токена`, HttpStatus.BAD_REQUEST);
@@ -295,7 +338,14 @@ export class AuthService {
   }
 
   private async findToken(refreshToken: string) {
-    const tokenData = await this.tokenModel.findOne({ refreshToken });
-    return tokenData;
+    try {
+      const tokenData = await this.tokenModel.findOne({ refreshToken });
+      return tokenData;
+    } catch (error) {
+      console.log('findToken', error.message);
+      throw new UnauthorizedException({
+        message: 'findToken service: рефреш токен отсутствует в базе и пользователь не авторизован',
+      });
+    }
   }
 }

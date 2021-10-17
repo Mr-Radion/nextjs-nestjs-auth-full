@@ -14,11 +14,10 @@ import {
   UploadedFile,
   UseInterceptors,
   Session,
+  UnauthorizedException,
   // UsePipes,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { Roles } from 'src/custom-decorators/roles-auth';
-import { JwtAuthGuard, LocalJwtAuthGuard, RolesGuard } from '../auth/guards';
 import {
   CreateUserDto,
   AddRoleDto,
@@ -40,9 +39,11 @@ import {
   // ApiImplicitFile,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Auth } from 'src/custom-decorators/auth.decorator';
+import { RolesType } from '../roles/roles.types';
+// import { LocalJwtAuthGuard} from '../auth/guards';
 // import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 // import { redis } from '../../redis';
-// import { RolesType } from '../roles/roles.types';
 // import { UserEntity } from './entity/user.entity';
 // import { ValidationPipe } from 'src/lib/pipes/validation.pipe';
 
@@ -53,9 +54,9 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение всех пользователей' })
   // @ApiResponse({ status: 200, type: [UserEntity] })
-  // @UseGuards(JwtAutGuard)
-  // @Roles('ADMIN', 'MANAGER')
-  // @UseGuards(RolesGuard)
+  // we specify roles with a condition "or"
+  // @UseGuards(AuthGuard('jwt'))
+  @Auth()
   @Get()
   getAll(@Session() session: Record<string, any>, @Query() query: UserQueryDto) {
     try {
@@ -70,10 +71,9 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение пользователя по id' })
   // @ApiResponse({ status: 200, type: UserEntity })
-  // @UseGuards(LocalJwtAuthGuard)  // using custom local.strategy => local-auth.guard using PassportStrategy
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'MANAGER')
-  @UseGuards(RolesGuard)
+  // @UseGuards(LocalJwtAuthGuard)
+  // @UseGuards(AuthGuard('jwt')) // using custom local.strategy => local-auth.guard using PassportStrategy
+  @Auth(RolesType.ADMIN)
   @Get('/getuser/:id')
   getOne(@Param('id') id: string) {
     try {
@@ -85,15 +85,25 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Получение пользователя по токену' })
   // @ApiResponse({ status: 200, type: UserEntity })
-  // @UseGuards(JwtAutGuard)
+  @Auth()
   @Get('/getme')
   async getMe(@Req() req: Request) {
     try {
       // const userId = await redis.get(`${id}`);  // альтернативный способ получить id, которое фиксируется при входе пользователя в систему, через сессии
       // if(req.session['userId'])  // альтернативный способ доступа к этому запросу, только залогиненному пользователю
-      return this.userService.getMeAccount(req.headers.authorization);
+      const userData = await this.userService.getMeAccount(req);
+      if (!userData) {
+        console.log('пустое значение');
+        throw new UnauthorizedException({
+          message: 'getMe controller1: пользователь не авторизован!',
+        });
+      }
+      return userData;
     } catch (error) {
-      console.log(error);
+      console.log('getMe controller', error);
+      throw new UnauthorizedException({
+        message: 'getMe controller2: пользователь не авторизован!',
+      });
     }
   }
 
@@ -102,15 +112,20 @@ export class UsersController {
   // @UsePipes(ValidationPipe)
   @Post()
   async create(
+    @Req() req: any,
     @Ip() ip: string,
     @Body() userDto: CreateUserDto,
     @Res({ passthrough: true }) response: any,
   ) {
     try {
       // console.log(userDto);
-      const userData = await this.userService.createUser(userDto, ip);
-      response.cookie('fcd', userData.refreshToken, {
-        maxAge: 60 * 24 * 68 * 68 * 1000,
+      const fingerprint = req.headers['fingerprint'];
+      const os = req.headers['sec-ch-ua-platform'];
+      console.log({ fingerprint });
+      const userData = await this.userService.createUser(userDto, ip, req.headers['user-agent'], fingerprint, os);
+      console.log(userData);
+      response.cookie('token', userData.user.refreshToken, {
+        maxAge: 60 * 24 * 60 * 60 * 1000,
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
       });
@@ -153,9 +168,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Удаление пользователя' })
   // @ApiResponse({ status: 200 })
-  // @UseGuards(JwtAutGuard)
-  // @Roles('ADMIN')
-  // @UseGuards(RolesGuard)
+  @Auth(RolesType.ADMIN)
   @Delete('remove/:id')
   removeUserOne(@Param('id') id: string) {
     try {
@@ -167,9 +180,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Забанить пользователя' })
   // @ApiResponse({ status: 200 })
-  // @UseGuards(JwtAutGuard)
-  // @Roles('ADMIN', 'MANAGER')
-  // @UseGuards(RolesGuard)
+  @Auth(RolesType.ADMIN)
   @Put('/ban/:userid')
   ban(@Param('userid') userid: string, @Body() dto: BanUserDto) {
     try {
@@ -181,9 +192,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Разблокировать пользователя' })
   // @ApiResponse({ status: 200 })
-  // @UseGuards(JwtAutGuard)
-  // @Roles('ADMIN', 'MANAGER')
-  // @UseGuards(RolesGuard)
+  @Auth(RolesType.ADMIN)
   @Post('/ban/:userid')
   unlock(@Param('userid') userid: string) {
     try {
@@ -195,9 +204,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Добавить роль пользователю' })
   // @ApiResponse({ status: 200 })
-  // @UseGuards(JwtAutGuard)
-  // @Roles('ADMIN')
-  // @UseGuards(RolesGuard)
+  @Auth(RolesType.ADMIN)
   @Put('/role/:userid')
   addRole(@Req() req: Request, @Param('userid') userid: string, @Body() dto: AddRoleDto) {
     try {
@@ -211,9 +218,7 @@ export class UsersController {
 
   // @ApiOperation({ summary: 'Удалить роль пользователю' })
   // @ApiResponse({ status: 200 })
-  // @UseGuards(JwtAutGuard)
-  // @Roles('ADMIN')
-  // @UseGuards(RolesGuard)
+  @Auth(RolesType.ADMIN)
   @Delete('/role')
   removeRole(@Query() query: RoleQueryDto) {
     try {

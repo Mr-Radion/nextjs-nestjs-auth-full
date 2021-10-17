@@ -13,8 +13,8 @@ export class RoleSessionIdGuard implements CanActivate {
         context.getHandler(),
         context.getClass(),
       ]);
-      if (!requiredRoles) {
-        return false;
+      if (!requiredRoles.length) {
+        return true;
       }
       if (req.session && req.session.roles.some(role => requiredRoles.includes(role.value))) {
         console.log(req.session.roles);

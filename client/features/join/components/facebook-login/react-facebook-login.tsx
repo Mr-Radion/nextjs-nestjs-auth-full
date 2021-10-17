@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import FacebookLogin from 'react-facebook-login';
 
+// facebook button for example, without using a passport strategy on your server, if necessary, you can send a request to the server to save
 export class FacebookButtonReact extends Component {
   state = {
     isLoggedIn: false,

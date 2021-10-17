@@ -21,9 +21,11 @@ export class RolesGuard implements CanActivate {
         context.getHandler(),
         context.getClass(),
       ]);
-      if (!requiredRoles) {
-        // return true;
-        return false;
+      console.log('requiredRoles', requiredRoles)
+      if (!requiredRoles.length) {
+        // so that the check is not done once again when the default is already USER and we have not passed USER to the decorator and want to leave him
+        return true;
+        // return false; // to explicitly specify all decorators, including the default one for checking the USER role
       }
       const req = context.switchToHttp().getRequest();
       const authHeader = req.headers.authorization;
@@ -45,6 +47,7 @@ export class RolesGuard implements CanActivate {
       }
 
       req.user = hasAccessTokenUser || hasRefreshTokenUser;
+      console.log('roles', hasAccessTokenUser.roles);
       return hasAccessTokenUser.roles.some(role => requiredRoles.includes(role.value));
     } catch (e) {
       console.log(e);

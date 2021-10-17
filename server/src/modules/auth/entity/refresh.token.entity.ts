@@ -3,7 +3,7 @@ import {
   Column,
   PrimaryGeneratedColumn,
   JoinTable,
-  OneToOne,
+  // OneToOne,
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
@@ -14,34 +14,36 @@ import { UserEntity } from 'src/modules/users/entity';
 
 @Entity({
   name: 'tokens',
-  orderBy: {
-    createdAt: 'ASC',
-  },
 })
 export class RefreshTokenSessionsEntity extends BaseEntity {
   // @ObjectIdColumn()
   // _id: string;
 
-  // @PrimaryGeneratedColumn("uuid")
+  // @PrimaryGeneratedColumn('uuid')
   @PrimaryGeneratedColumn()
-  id: number;
+  id: string;
 
   @ManyToOne(() => UserEntity, (userEntity: UserEntity) => userEntity.id)
   @JoinTable({ name: 'userId' })
   user: UserEntity;
 
-  // @ManyToOne(() => UserEntity)
-  // @JoinTable()
-  // user: UserEntity;
+  @Column({ nullable: true })
+  public refreshToken: string;
 
   @Column({ nullable: false })
-  refreshToken: string;
-
-  @Column({ nullable: true })
   ip: string;
 
-  // @Column()
-  // expiresIn: string;
+  @Column({ nullable: true })
+  os: string;
+
+  @Column()
+  ua: string;
+
+  @Column({ nullable: true })
+  fingerprint: string;
+
+  @Column()
+  expiresIn: string;
 
   @CreateDateColumn({
     name: 'creation_at',
