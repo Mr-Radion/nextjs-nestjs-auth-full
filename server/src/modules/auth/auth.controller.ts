@@ -195,12 +195,10 @@ export class AuthController {
   async googleAuthRedirect(
     @Ip() ip: any,
     @Req() req: any,
-    @Res({ passthrough: true }) response: any,
+    @Res() response: any,
   ) {
     try {
       const userData = await this.authService.googleLogin(req, ip, 'googleId');
-
-      console.log('userData1', { userData });
 
       if (userData && !hasUserAgent(req).mobile) {
         response.send(
@@ -209,7 +207,7 @@ export class AuthController {
           )}', '*');window.close()</script>`,
         );
       }
-      console.log('userData2', { userData });
+
       // for mobile
       return userData;
     } catch (error) {
@@ -228,7 +226,7 @@ export class AuthController {
   async facebookLoginRedirect(
     @Ip() ip: any,
     @Req() req: any,
-    @Res({ passthrough: true }) response: any,
+    @Res() response: any,
   ) {
     try {
       const userData = await this.authService.facebookLogin(req, ip, 'facebookId');
@@ -259,7 +257,7 @@ export class AuthController {
   async vkontakteLoginRedirect(
     @Ip() ip: any,
     @Req() req: any,
-    @Res({ passthrough: true }) response: any,
+    @Res() response: any,
   ) {
     try {
       const userData = await this.authService.vkontakteLogin(req, ip, 'vkontakteId');
@@ -290,7 +288,7 @@ export class AuthController {
   async odnoklassnikiLoginRedirect(
     @Ip() ip: any,
     @Req() req: any,
-    @Res({ passthrough: true }) response: any,
+    @Res() response: any,
   ) {
     try {
       const userData = await this.authService.odnoklassnikiLogin(req, ip, 'odnoklassnikiId');
@@ -321,7 +319,7 @@ export class AuthController {
   async mailruLoginRedirect(
     @Ip() ip: any,
     @Req() req: any,
-    @Res({ passthrough: true }) response: any,
+    @Res() response: any,
   ) {
     try {
       const userData = await this.authService.mailruLogin(req, ip, 'mailruId');

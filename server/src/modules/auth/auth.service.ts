@@ -43,7 +43,6 @@ export class AuthService {
   }
 
   async autinficateSocialNetwork(req: any, ip: any, socId: any) {
-    console.log('google req2', { req });
     if (!req.user) {
       return `No user from ${req.user.provider}`;
     }
@@ -132,7 +131,6 @@ export class AuthService {
   }
 
   async googleLogin(req: any, ip: string, socId: any) {
-    console.log('google req', { req });
     return this.autinficateSocialNetwork(req, ip, socId);
   }
 
