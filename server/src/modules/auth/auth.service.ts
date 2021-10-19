@@ -45,6 +45,20 @@ export class AuthService {
     }
   }
 
+  // отправляем сгенерированный одноразовый код на почту
+  async loginMail(email: string) {}
+
+  // проверка валидности одноразового кода, мгновенная активация аккаунта через почту,
+  // возможность вместо ввода кода входить прямо по ссылке в свой аккаунт на сайте
+  async verifyMail(
+    email: string,
+    code: string,
+    ip: string,
+    ua: string,
+    fingerprint: string,
+    os: string,
+  ) {}
+
   async sendPhone(TARGET_PHONE_NUMBER: string) {
     return await this.phoneService.sendPhoneSMS(TARGET_PHONE_NUMBER);
   }
@@ -53,8 +67,72 @@ export class AuthService {
     return await this.phoneService.login(TARGET_PHONE_NUMBER, channel);
   }
 
-  async phoneVerifyService(TARGET_PHONE_NUMBER: string, code: string) {
-    return await this.phoneService.verify(TARGET_PHONE_NUMBER, code);
+  async phoneVerifyService(
+    TARGET_PHONE_NUMBER: string,
+    code: string,
+    ip: string,
+    ua: string,
+    fingerprint: string,
+    os: string,
+  ) {
+    const result = await this.phoneService.verify(TARGET_PHONE_NUMBER, code);
+    const hasPhone = this.getUserByPhone(TARGET_PHONE_NUMBER);
+    let createUser: any;
+
+    if (result.valid) {
+      console.log({ result });
+      if (!hasPhone) {
+        // user creation
+        createUser = new UserEntity();
+        createUser.phone = TARGET_PHONE_NUMBER;
+        createUser.isActivated = true;
+
+        await createUser.save();
+
+        // adding user role
+        const roleId = await this.roleService.getRoleByValue('USER');
+        let commonUsRol = new UserRolesEntity();
+        commonUsRol.roleId = roleId.id;
+        commonUsRol.userId = createUser.id;
+        await commonUsRol.save();
+      }
+
+      const userDataAndTokens = await this.tokenSession(
+        hasPhone ?? createUser,
+        ip,
+        ua,
+        fingerprint,
+        os,
+      );
+
+      return {
+        message: 'User is Verified!!',
+        status: result.status, // 'pending', 'approved' or 'canceled'
+        // after the first successful attempt, the code becomes invalid for its own re-check it will give a 404 status
+        valid: result.valid, // validity of the code submitted by the user
+        /* if wrong code
+          verifyResult: {
+            sid: 'VE################################',
+            serviceSid: 'VA################################',
+            accountSid: 'AC################################',
+            to: '+79031671617',
+            channel: 'sms',
+            status: 'pending',
+            valid: false,
+            amount: null,
+            payee: null,
+            dateCreated: 2021-10-19T15:38:52.000Z,
+            dateUpdated: 2021-10-19T15:40:31.000Z
+          }
+        */
+        // timer дата от или/и до?
+        dateCreated: result.dateCreated, // data created code
+        dateUpdated: result.dateUpdated, // data update code
+        ...userDataAndTokens,
+      };
+    }
+
+    return result; // не забыть, что должны возвращаться данные не только токенов и пользователя, но и от мобильного из ендпоинта
   }
 
   async autinficateSocialNetwork(req: any, ip: any, socId: any) {
@@ -245,6 +323,11 @@ export class AuthService {
 
   async getUserByEmail(email: string) {
     const user = await this.userModel.findOne({ email });
+    return user;
+  }
+
+  async getUserByPhone(phone: string) {
+    const user = await this.userModel.findOne({ phone });
     return user;
   }
 

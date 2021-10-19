@@ -13,7 +13,7 @@
 
 ## Getting Started
 
-### Frontend running code
+### Frontend
 
 First, run the development server:
 
@@ -29,7 +29,7 @@ You can start editing the page by modifying `pages/index.tsx`. The page auto-upd
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
-### Backend running code
+### Backend
 
 ```bash
 npm run start:dev

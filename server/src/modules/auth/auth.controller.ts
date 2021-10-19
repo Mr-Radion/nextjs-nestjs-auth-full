@@ -62,9 +62,19 @@ export class AuthController {
         fingerprint,
         os,
       );
-      // if (userData.user.isActivated === false) {
-      //   return 'подтвердите email';
-      // }
+      if (userData.user.user.isActivated === false) {
+        return 'подтвердите email'; // otherwise, anyone can specify someone else's mail and use the account
+        // or you can parse it userData.user.user.isActivated on the frontend and, depending on the result, render
+        /* 
+          example frontend text
+          Verify you're a human to start your free trial
+          Verify Email
+          We sent an email to mr.rodion_oa@mail.ru
+          To continue, please check your email and verify your account.
+          Didn't receive the email?
+          Button Resend Email
+        */
+      }
       req.session['userId'] = userData.user.user.id;
       req.session['roles'] = userData.user.user.roles;
       if (userData && !hasUserAgent(req).mobile) {
@@ -82,6 +92,27 @@ export class AuthController {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  // Отправка одноразового кода на почту
+  @Post('/login/mail')
+  async loginMail(@Body() dto: any) {
+    const userData = await this.authService.loginMail(dto.email);
+    return userData;
+  }
+
+  // Проверка одноразового кода отправленного на почту и верификация пользователя
+  @Post('/verify/mail')
+  async VerifyMail(@Body() dto: any, @Req() req: any, @Ip() ip: any) {
+    const userData = await this.authService.verifyMail(
+      dto.email,
+      dto.code,
+      ip,
+      req.headers['user-agent'],
+      req.headers['fingerprint'],
+      req.headers['sec-ch-ua-platform'],
+    );
+    return userData;
   }
 
   // @ApiOperation({ summary: 'Ссылка для подтверждения почты и активации аккаунта' })
@@ -143,9 +174,6 @@ export class AuthController {
   @Post('/find_token')
   async findToken(@Ip() ip: any, @Req() req: any, @Res({ passthrough: true }) response: any) {
     try {
-      console.log({ body: req.body });
-      console.log({ req: req });
-      // перенести для аутенфикации в соотв контроллер или тут исправить, но помнить об ощибке установления заголовка, после отправки результата
       // req.session.userId = req.body.userId;
       // req.session['roles'] = userDataAndTokens['user'].user.roles;
 
@@ -381,16 +409,20 @@ export class AuthController {
   // После удачной отправки кода на телефон, мы отправляем сюда номер и код, в ответ приходит валидный ли код true или false,
   // либо если код не ввели или номер ошибка
   @Get('/verify/phone')
-  phoneVerify(@Req() req: any, @Res() res: any) {
+  async phoneVerify(@Ip() ip: string, @Req() req: any, @Res() res: any) {
     try {
-      const verifyResult = this.authService.phoneVerifyService(
+      const verifyResult = await this.authService.phoneVerifyService(
         req.query.phonenumber,
         req.query.code,
+        ip,
+        req.headers['user-agent'],
+        req.headers['fingerprint'],
+        req.headers['sec-ch-ua-platform'],
       );
       /* example valid result verifyResult: {
-        sid: 'VE64bd7f056d6a56370bbf31510f9fa19e',
-        serviceSid: 'VAee2058857cf66834f062824ea3d4807a',
-        accountSid: 'AC260c8b6f52128449aae54f72bca829f3',
+        sid: 'VE################################',
+        serviceSid: 'VA################################',
+        accountSid: 'AC################################',
         to: '+79051111111',
         channel: 'sms',
         status: 'approved',
@@ -401,37 +433,17 @@ export class AuthController {
         dateUpdated: 2021-10-19T14:40:45.000Z
       } */
 
-      // при удачном исходе тут нужно tokensession запустить с генерацией токенов и данных пользователя
-      // причем как при аутенфикации через соц сети, можно авторизовывать и регистрировать в приложении, в зависимости от наличия номера,
-      // в дальнейшем этот номер в профиле можно менять, но подтверждая его смс кодом также верифицируясь или добавить возможность добавлять
-      // новые номера на которые не нужно ориентироваться при дальнейшей авторизации или верификации
+      console.log({ verifyResult });
 
-      verifyResult.then(data => {
-        res.status(200).send({
-          message: 'User is Verified!!',
-          status: data.status, // 'pending', 'approved' or 'canceled'
-          // after the first successful attempt, the code becomes invalid for its own re-check it will give a 404 status
-          valid: data.valid, // validity of the code submitted by the user
-          /* if wrong code
-            verifyResult: {
-              sid: 'VE2d703b2182d342406a037aa65d460772',
-              serviceSid: 'VAee2058857cf66834f062824ea3d4807a',
-              accountSid: 'AC260c8b6f52128449aae54f72bca829f3',
-              to: '+79031671617',
-              channel: 'sms',
-              status: 'pending',
-              valid: false,
-              amount: null,
-              payee: null,
-              dateCreated: 2021-10-19T15:38:52.000Z,
-              dateUpdated: 2021-10-19T15:40:31.000Z
-            }
-          */
-          // timer дата от или/и до?
-          dateCreated: data.dateCreated, // data created code
-          dateUpdated: data.dateUpdated, // data update code
-        });
+      res.clearCookie('token');
+      res.cookie('token', verifyResult['user'].refreshToken, {
+        maxAge: 60 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: true,
+        secure: process.env.NODE_ENV !== 'development',
       });
+      delete verifyResult['user'].refreshToken;
+      res.status(200).send(verifyResult);
     } catch (error) {
       console.log({ status: error.status }, { message: error?.message });
       if (error.message === 'Required parameter "opts.code" missing')
