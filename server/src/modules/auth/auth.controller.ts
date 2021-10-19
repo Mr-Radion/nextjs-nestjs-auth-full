@@ -25,6 +25,7 @@ import { CreateUserDto } from '../users/dto';
 import { AuthService } from './auth.service';
 import { hasUserAgent } from 'src/utils/has-user-agent';
 import { RefreshTokenSessionsEntity } from './entity';
+// import client from 'twilio';
 // import { LocalAuthGuard } from './guards';
 // import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -192,11 +193,7 @@ export class AuthController {
 
   @Get('/google/redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(
-    @Ip() ip: any,
-    @Req() req: any,
-    @Res() response: any,
-  ) {
+  async googleAuthRedirect(@Ip() ip: any, @Req() req: any, @Res() response: any) {
     try {
       const userData = await this.authService.googleLogin(req, ip, 'googleId');
 
@@ -223,11 +220,7 @@ export class AuthController {
 
   @Get('/facebook/redirect')
   @UseGuards(AuthGuard('facebook'))
-  async facebookLoginRedirect(
-    @Ip() ip: any,
-    @Req() req: any,
-    @Res() response: any,
-  ) {
+  async facebookLoginRedirect(@Ip() ip: any, @Req() req: any, @Res() response: any) {
     try {
       const userData = await this.authService.facebookLogin(req, ip, 'facebookId');
 
@@ -254,11 +247,7 @@ export class AuthController {
 
   @Get('/vkontakte/redirect')
   @UseGuards(AuthGuard('vkontakte'))
-  async vkontakteLoginRedirect(
-    @Ip() ip: any,
-    @Req() req: any,
-    @Res() response: any,
-  ) {
+  async vkontakteLoginRedirect(@Ip() ip: any, @Req() req: any, @Res() response: any) {
     try {
       const userData = await this.authService.vkontakteLogin(req, ip, 'vkontakteId');
 
@@ -285,11 +274,7 @@ export class AuthController {
 
   @Get('/odnoklassniki/redirect')
   @UseGuards(AuthGuard('odnoklassniki'))
-  async odnoklassnikiLoginRedirect(
-    @Ip() ip: any,
-    @Req() req: any,
-    @Res() response: any,
-  ) {
+  async odnoklassnikiLoginRedirect(@Ip() ip: any, @Req() req: any, @Res() response: any) {
     try {
       const userData = await this.authService.odnoklassnikiLogin(req, ip, 'odnoklassnikiId');
 
@@ -316,11 +301,7 @@ export class AuthController {
 
   @Get('/mailru/redirect')
   @UseGuards(AuthGuard('mailru'))
-  async mailruLoginRedirect(
-    @Ip() ip: any,
-    @Req() req: any,
-    @Res() response: any,
-  ) {
+  async mailruLoginRedirect(@Ip() ip: any, @Req() req: any, @Res() response: any) {
     try {
       const userData = await this.authService.mailruLogin(req, ip, 'mailruId');
 
@@ -337,6 +318,158 @@ export class AuthController {
     } catch (error) {
       console.log('/mailru/redirect controller error', error?.message);
     }
+  }
+
+  // Login Phone Endpoint
+  // мы отправляем сюда только телефон, чтобы получить код на него, при удаче придет true
+  @Get('/login/phone')
+  phoneLogin(@Req() req: any, @Res() res: any) {
+    try {
+      const loginResult = this.authService.phoneLoginService(
+        req.query.phonenumber,
+        req.query.channel,
+      );
+      /* example valid result
+        loginResult: {
+          sid: 'VE********************************',
+          serviceSid: 'VA********************************', // of course, instead of asterisks, your data
+          accountSid: 'AC********************************',
+          to: '+79051111111',
+          channel: 'sms',
+          status: 'pending',
+          valid: false,
+          lookup: {
+            carrier: {
+              mobile_country_code: '250',
+              type: 'mobile',
+              error_code: null,
+              mobile_network_code: '99',
+              name: 'VimpelCom'
+            }
+          },
+          amount: null,
+          payee: null,
+          sendCodeAttempts: [
+            {
+              attempt_sid: 'VL********************************',
+              channel: 'sms',
+              time: '2021-10-19T14:36:59.449Z'
+            }
+          ],
+          dateCreated: 2021-10-19T14:36:59.000Z,
+          dateUpdated: 2021-10-19T14:36:59.000Z,
+          url: 'https://verify.twilio.com/v2/Services/VA################################/Verifications/VE################################/'
+        }
+      */
+      loginResult.then(data => {
+        res.status(200).send({
+          message: 'Verification is sent!!',
+          phonenumber: req.query.phonenumber,
+          status: data.status, // 'pending', 'approved' or 'canceled'
+          // canceled - verification checks are either canceled, or if it’s been 10 minutes or longer since the verification code was sent to the user, expired.
+          // if you request again after 10 minutes, you will receive the same code with the same creation date
+          dateCreated: data.dateCreated, // data created code - from here we count 10 minutes for the front, and update on repeated request
+          dateUpdated: data.dateUpdated, // data update code
+        });
+      });
+    } catch (error) {
+      throw new HttpException(`Неверный формат номера`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  // Verify Endpoint
+  // После удачной отправки кода на телефон, мы отправляем сюда номер и код, в ответ приходит валидный ли код true или false,
+  // либо если код не ввели или номер ошибка
+  @Get('/verify/phone')
+  phoneVerify(@Req() req: any, @Res() res: any) {
+    try {
+      const verifyResult = this.authService.phoneVerifyService(
+        req.query.phonenumber,
+        req.query.code,
+      );
+      /* example valid result verifyResult: {
+        sid: 'VE64bd7f056d6a56370bbf31510f9fa19e',
+        serviceSid: 'VAee2058857cf66834f062824ea3d4807a',
+        accountSid: 'AC260c8b6f52128449aae54f72bca829f3',
+        to: '+79051111111',
+        channel: 'sms',
+        status: 'approved',
+        valid: true,
+        amount: null,
+        payee: null,
+        dateCreated: 2021-10-19T14:36:59.000Z,
+        dateUpdated: 2021-10-19T14:40:45.000Z
+      } */
+
+      // при удачном исходе тут нужно tokensession запустить с генерацией токенов и данных пользователя
+      // причем как при аутенфикации через соц сети, можно авторизовывать и регистрировать в приложении, в зависимости от наличия номера,
+      // в дальнейшем этот номер в профиле можно менять, но подтверждая его смс кодом также верифицируясь или добавить возможность добавлять
+      // новые номера на которые не нужно ориентироваться при дальнейшей авторизации или верификации
+
+      verifyResult.then(data => {
+        res.status(200).send({
+          message: 'User is Verified!!',
+          status: data.status, // 'pending', 'approved' or 'canceled'
+          // after the first successful attempt, the code becomes invalid for its own re-check it will give a 404 status
+          valid: data.valid, // validity of the code submitted by the user
+          /* if wrong code
+            verifyResult: {
+              sid: 'VE2d703b2182d342406a037aa65d460772',
+              serviceSid: 'VAee2058857cf66834f062824ea3d4807a',
+              accountSid: 'AC260c8b6f52128449aae54f72bca829f3',
+              to: '+79031671617',
+              channel: 'sms',
+              status: 'pending',
+              valid: false,
+              amount: null,
+              payee: null,
+              dateCreated: 2021-10-19T15:38:52.000Z,
+              dateUpdated: 2021-10-19T15:40:31.000Z
+            }
+          */
+          // timer дата от или/и до?
+          dateCreated: data.dateCreated, // data created code
+          dateUpdated: data.dateUpdated, // data update code
+        });
+      });
+    } catch (error) {
+      console.log({ status: error.status }, { message: error?.message });
+      if (error.message === 'Required parameter "opts.code" missing')
+        throw new HttpException(`В запросе отсутствует код для верификаци`, HttpStatus.BAD_REQUEST);
+      if (error.status === 404)
+        throw new HttpException(
+          `Запрошеный ресурс не найден или одноразовый код просрочен`,
+          HttpStatus.NOT_FOUND,
+        );
+      if (error.status >= 400 && error.status < 500)
+        throw new HttpException(`Ошибка запроса`, HttpStatus.BAD_REQUEST);
+      if (error.status >= 500) throw new HttpException(`Ошибка сервера`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Get('/send_one/phone')
+  async phoneSendOne(@Req() req: any, @Res() res: any) {
+    try {
+      const sendSMS = await this.authService.sendPhone(req.query.phonenumber);
+      return sendSMS;
+    } catch (error) {
+      throw new HttpException(`Неверный формат номера`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  // Создание нового пароля
+  @Post('/password')
+  async passwordNew() {
+    // 1. Отправка сообщения с ссылкой на фронт (на почту или телефон, в зависимости от того, что ввели после нажатия кнопки забыли пароль),
+    // где далее в письме перейдя по ссылке нужно ввести и подтвердить новый пароль, контроллер сделать тут или в mail...
+    // 2. Принять введенный новый пароль и изменить его у пользователя в модели, прежде захэшировав
+  }
+
+  // Изменение текущего пароля
+  @Put('/password')
+  async passwordUpdate() {
+    // 1. Принять и сравнить старый пароль с тем что есть у пользователя в модели, если все верно, перейти к след шагу, иначе выдать ошибку
+    // 2. Принять введенный новый пароль и изменить его у пользователя в модели, прежде захэшировав
   }
 
   // @ApiOperation({ summary: 'Выход из приложения' })

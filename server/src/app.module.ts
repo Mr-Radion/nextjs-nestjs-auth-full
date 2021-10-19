@@ -6,6 +6,7 @@ import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { MailModule } from './modules/mail/mail.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { PhoneModule } from './modules/phone/phone.module';
 import path from 'path';
 
 @Module({
@@ -29,6 +30,7 @@ import path from 'path';
         synchronize: true,
       }),
     }),
+    PhoneModule,
     // ServeStaticModule.forRoot({
     //   rootPath: path.resolve(__dirname, '..', 'static'),
     // }),

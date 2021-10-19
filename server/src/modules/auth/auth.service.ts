@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectTwilio, TwilioClient } from 'nestjs-twilio';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,9 +12,9 @@ import { RefreshTokenSessionsEntity } from './entity';
 import { UserRolesEntity } from '../roles/entity';
 import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
+import { PhoneService } from '../phone/phone.service';
 // import passfather from 'passfather';
 import { generate } from 'generate-password';
-import { response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,8 @@ export class AuthService {
     private roleService: RoleService,
     private jwtService: JwtService,
     private mailService: MailService,
+    private phoneService: PhoneService,
+    @InjectTwilio() private readonly client: TwilioClient,
     private connection: Connection, // TypeORM transactions. // private readonly userRolesModel: Repository<UserRolesEntity>,
   ) {}
 
@@ -40,6 +43,18 @@ export class AuthService {
     } catch (error) {
       throw console.log(error);
     }
+  }
+
+  async sendPhone(TARGET_PHONE_NUMBER: string) {
+    return await this.phoneService.sendPhoneSMS(TARGET_PHONE_NUMBER);
+  }
+
+  async phoneLoginService(TARGET_PHONE_NUMBER: string, channel?: string) {
+    return await this.phoneService.login(TARGET_PHONE_NUMBER, channel);
+  }
+
+  async phoneVerifyService(TARGET_PHONE_NUMBER: string, code: string) {
+    return await this.phoneService.verify(TARGET_PHONE_NUMBER, code);
   }
 
   async autinficateSocialNetwork(req: any, ip: any, socId: any) {

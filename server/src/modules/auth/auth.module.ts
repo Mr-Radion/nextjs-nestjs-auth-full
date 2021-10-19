@@ -20,6 +20,7 @@ import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
 import { PassportModule } from '@nestjs/passport';
 import { RolesModule } from '../roles/roles.module';
+import { PhoneService } from '../phone/phone.service';
 
 @Module({
   controllers: [AuthController],
@@ -30,6 +31,7 @@ import { RolesModule } from '../roles/roles.module';
     // VkontakteStrategy,
     // OdnoklassnikiStrategy,
     // MailruStrategy,
+    PhoneService,
     RoleService,
     MailService,
     LocalStrategy,

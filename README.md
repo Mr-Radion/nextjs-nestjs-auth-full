@@ -1,15 +1,19 @@
 # Full auth app
 
 - access and refresh tokens;
-- session jwt + postgres and session id + redis;
+- access levels by role;
+- session id + redis;
+- confirmation mail;
 - social network, local and jwt auth passport strategy;
+- verification via mobile with timer and code resending;
+- changing and creating a new password;
 - axios token interseptor;
-- ssr nextjs token strategy;
+- nextjs token strategy;
 - swagger api;
 
 ## Getting Started
 
-### Frontend
+### Frontend running code
 
 First, run the development server:
 
@@ -25,7 +29,7 @@ You can start editing the page by modifying `pages/index.tsx`. The page auto-upd
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
-### Backend
+### Backend running code
 
 ```bash
 npm run start:dev
