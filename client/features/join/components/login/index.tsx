@@ -8,6 +8,8 @@ import { GoogleButton } from '../google-login';
 export const LoginForm: FC = observer(() => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
+  const [otpCode, setOTPCode] = useState<string>('');
   const { store } = useContext(Context);
 
   const googleFetch = () => {
@@ -26,12 +28,42 @@ export const LoginForm: FC = observer(() => {
         },
       }}
     >
-      <form>
-        {/* <Button color="primary" variant="contained" onClick={() => googleFetch()}>
+      {/* <Button color="primary" variant="contained" onClick={() => googleFetch()}>
           Google
         </Button> */}
-        <GoogleButton />
-        <FacebookButton />
+      <GoogleButton />
+      <FacebookButton />
+      <form>
+        <h3>Верификация через мобильный телефон</h3>
+        <TextField
+          onChange={e => setPhone(e.target.value)}
+          value={phone}
+          className="mb-20"
+          size="small"
+          label="Введите номер телефона"
+          variant="outlined"
+          fullWidth
+          required
+        />
+        <TextField
+          onChange={e => setOTPCode(e.target.value)}
+          value={otpCode}
+          className="mb-20"
+          size="small"
+          label="Введите одноразовый код доступа"
+          variant="outlined"
+          fullWidth
+          required
+        />
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={() => store.verifyPhone(phone, otpCode)}
+        >
+          Войти
+        </Button>
+      </form>
+      <form>
         {/* <input
           onChange={e => setEmail(e.target.value)}
           value={email}

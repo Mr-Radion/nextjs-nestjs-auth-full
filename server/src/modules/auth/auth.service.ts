@@ -76,17 +76,15 @@ export class AuthService {
     os: string,
   ) {
     const result = await this.phoneService.verify(TARGET_PHONE_NUMBER, code);
-    const hasPhone = this.getUserByPhone(TARGET_PHONE_NUMBER);
+    const hasPhone = await this.getUserByPhone(TARGET_PHONE_NUMBER);
     let createUser: any;
 
     if (result.valid) {
-      console.log({ result });
       if (!hasPhone) {
         // user creation
         createUser = new UserEntity();
         createUser.phone = TARGET_PHONE_NUMBER;
         createUser.isActivated = true;
-
         await createUser.save();
 
         // adding user role
@@ -307,7 +305,7 @@ export class AuthService {
       userData.roles = userRoles.map(userRoles => userRoles.role);
     }
 
-    const userDto = new UserDto(userData); // leave merely id, facebookId, googleId, email, roles, isActivated
+    const userDto = new UserDto(userData); // leave merely id, facebookId, googleId, email, roles, isActivated, phone
     const tokens = await this.generateToken({ ...userDto });
     await this.saveToken(userData.id, tokens.refreshToken, ip, ua, os, fingerprint);
     return {
@@ -359,7 +357,11 @@ export class AuthService {
     os?: any,
     fingerprint?: any,
   ) {
-    if (!fingerprint) console.log('Отсутствует отпечаток браузера!');
+    if (!fingerprint) {
+      // !!! иметь ввиду, что для моб приложений, стоит добавить условие исключив их из этого исключения
+      console.log('Отсутствует отпечаток браузера!');
+      throw new HttpException(`Отсутствует отпечаток браузера!`, HttpStatus.BAD_REQUEST);
+    }
     const hasToken = await this.tokenModel.find({ user: userId, fingerprint });
 
     // create a token from scratch for a new user or after deleting an old token

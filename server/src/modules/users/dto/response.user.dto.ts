@@ -2,6 +2,7 @@ export class UserDto {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   id: string;
   facebookId: string;
   googleId: string;
@@ -14,6 +15,7 @@ export class UserDto {
     this.firstName = model.firstName;
     this.lastName = model.lastName;
     this.email = model.email;
+    this.phone = model.phone;
     this.id = model.id;
     // model.facebookId ? (this.facebookId = model.facebookId) : '';
     // model.googleId ? (this.googleId = model.googleId) : '';

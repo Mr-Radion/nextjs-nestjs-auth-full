@@ -4,8 +4,10 @@
 - access levels by role;
 - session id + redis;
 - confirmation mail;
-- social network, local and jwt auth passport strategy;
-- verification via mobile with timer and code resending;
+- social network authentication via passport;
+- local and jwt auth passport strategy;
+- verification via mobile with timer and code resending witch twilio;
+- otp verify via mail;
 - changing and creating a new password;
 - axios token interseptor;
 - nextjs token strategy;

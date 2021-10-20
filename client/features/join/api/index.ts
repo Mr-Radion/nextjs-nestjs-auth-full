@@ -1,6 +1,6 @@
 import $api from '../../../http';
 import { AxiosResponse } from 'axios';
-import { AuthResponse } from '../../../types';
+import { AuthResponse, AuthVerifyPhoneResponse } from '../../../types';
 // import fingerprint from '../../../utils/fingerprint';
 
 export class AuthService {
@@ -25,6 +25,19 @@ export class AuthService {
 
   static async registration(email: string, password: string): Promise<AxiosResponse<AuthResponse>> {
     return $api.post<AuthResponse>('/users', { email, password });
+  }
+
+  static async loginPhoneApi(phone: string, channel: string): Promise<AxiosResponse<any>> {
+    return $api.get<any>(`/auth/login/phone?phonenumber=${phone}&channel=${channel}`);
+  }
+
+  static async verifyPhoneApi(
+    phone: string,
+    otpCode: string,
+  ): Promise<AxiosResponse<AuthVerifyPhoneResponse>> {
+    return $api.get<AuthVerifyPhoneResponse>(
+      `/auth/verify/phone?phonenumber=${phone}&code=${otpCode}`,
+    );
   }
 
   static async logout(): Promise<void> {

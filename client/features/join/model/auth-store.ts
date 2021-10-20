@@ -54,6 +54,29 @@ export class AuthStore {
     }
   }
 
+  async loginPhone(phone: string, channel: string) {
+    try {
+      const response = await AuthService.loginPhoneApi(phone, channel);
+      console.log(response.data.status);
+      // продолжение следует ...
+    } catch (e) {
+      console.log(e.response?.data?.message);
+    }
+  }
+
+  async verifyPhone(phone: string, otpCode: string) {
+    try {
+      const response = await AuthService.verifyPhoneApi(phone, otpCode);
+      console.log({ responseVerifyPhone: response });
+      Cookies.remove('token-access');
+      Cookies.set('token-access', response.data.user.accessToken);
+      this.setAuth(true);
+      this.setUser(response.data.user.user);
+    } catch (e) {
+      console.log(e.response?.data?.message);
+    }
+  }
+
   async logout() {
     try {
       // const response = await AuthService.logout();

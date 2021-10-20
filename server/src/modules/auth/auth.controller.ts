@@ -433,8 +433,6 @@ export class AuthController {
         dateUpdated: 2021-10-19T14:40:45.000Z
       } */
 
-      console.log({ verifyResult });
-
       res.clearCookie('token');
       res.cookie('token', verifyResult['user'].refreshToken, {
         maxAge: 60 * 24 * 60 * 60 * 1000,
