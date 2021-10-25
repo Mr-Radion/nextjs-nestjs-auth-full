@@ -5501,6 +5501,11 @@ os-tmpdir@~1.0.2:
   resolved "https://registry.yarnpkg.com/os-tmpdir/-/os-tmpdir-1.0.2.tgz#bbe67406c79aa85c5cfec766fe5734555dfa1274"
   integrity sha1-u+Z0BseaqFxc/sdm/lc0VV36EnQ=
 
+otp-generator@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/otp-generator/-/otp-generator-3.0.0.tgz#823a391df020a73a24dc105eecce8091ba15af68"
+  integrity sha512-InxKqHsAT7lvHmi9GEpw7S0feaEndIuWQaeRKGo71B2uPld6wzGvLdT55671xvYIsFO18c9Wplu1dxfM+ZbwdQ==
+
 p-each-series@^2.1.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/p-each-series/-/p-each-series-2.2.0.tgz#105ab0357ce72b202a8a8b94933672657b5e2a9a"

@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { UserEntity } from '../users/entity';
-import { RefreshTokenSessionsEntity } from './entity';
+import { OTPEntity, RefreshTokenSessionsEntity } from './entity';
 import { RoleEntity, UserRolesEntity } from '../roles/entity';
 import {
   FacebookStrategy,
@@ -45,7 +45,13 @@ import { PhoneService } from '../phone/phone.service';
         expiresIn: '10m',
       },
     }),
-    TypeOrmModule.forFeature([RefreshTokenSessionsEntity, UserEntity, UserRolesEntity, RoleEntity]),
+    TypeOrmModule.forFeature([
+      RefreshTokenSessionsEntity,
+      UserEntity,
+      UserRolesEntity,
+      RoleEntity,
+      OTPEntity,
+    ]),
     RolesModule,
     forwardRef(() => UsersModule),
   ],

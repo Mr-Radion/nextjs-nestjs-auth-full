@@ -8,11 +8,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Connection } from 'typeorm';
 import { UserEntity } from '../users/entity';
 import { UserDto } from '../users/dto';
-import { RefreshTokenSessionsEntity } from './entity';
+import { OTPEntity, RefreshTokenSessionsEntity } from './entity';
 import { UserRolesEntity } from '../roles/entity';
 import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
 import { PhoneService } from '../phone/phone.service';
+import otpGenerator from 'otp-generator';
 // import passfather from 'passfather';
 import { generate } from 'generate-password';
 
@@ -20,6 +21,7 @@ import { generate } from 'generate-password';
 export class AuthService {
   constructor(
     @InjectRepository(UserEntity) private readonly userModel: Repository<UserEntity>,
+    @InjectRepository(OTPEntity) private readonly otpModel: Repository<OTPEntity>,
     @InjectRepository(RefreshTokenSessionsEntity)
     private readonly tokenModel: Repository<RefreshTokenSessionsEntity>,
     private roleService: RoleService,
@@ -46,7 +48,16 @@ export class AuthService {
   }
 
   // отправляем сгенерированный одноразовый код на почту
-  async loginMail(email: string) {}
+  async loginMail(email: string, fingerprint: string) {
+    // генерация одноразовых паролей
+    const generatorOtp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
+
+    // сохранение в бд кода
+    await this.otpModel.save({ email, code: generatorOtp, fingerprint });
+
+    // отправление на почту
+    await this.mailService.sendMailCode(email, generatorOtp);
+  }
 
   // проверка валидности одноразового кода, мгновенная активация аккаунта через почту,
   // возможность вместо ввода кода входить прямо по ссылке в свой аккаунт на сайте
@@ -57,7 +68,37 @@ export class AuthService {
     ua: string,
     fingerprint: string,
     os: string,
-  ) {}
+  ) {
+    // 1. Поиск совпадений по коду в базе
+    let data = await this.otpModel.find({ email, code, fingerprint });
+
+    let response: any;
+    // 2. Удаление просроченных кодов
+    if (data.length) {
+      let currentTime = new Date().getTime();
+      let diff: any = Number(data[0].expiresIn) - currentTime;
+      if (diff < 0) {
+        response.message = 'Token Expire';
+        response.statusText = 'error';
+      } else {
+        // создание пользователя и токен сессия, если данный юзер в бд существует использовать его данные для входа, иначе создать пароль?
+        // user.save()
+      }
+    }
+
+    // ?. Удаление лишних кодов
+    // если на почту отправился, а в бд не сохранился обыграть или в бд сохранился, а на почту не отправился
+    // если такого code в бд нету, но есть другой с того же браузера(не другого), то удалить код прошлый, видимо он не отправился вовремя на почту или т.п ?
+    if (!data.length) {
+      let someCode = this.otpModel.find({ fingerprint });
+      if (someCode) {
+        this.otpModel.delete({ fingerprint });
+      }
+
+      response.message = 'Invalid Otp';
+      response.statusText = 'error';
+    }
+  }
 
   async sendPhone(TARGET_PHONE_NUMBER: string) {
     return await this.phoneService.sendPhoneSMS(TARGET_PHONE_NUMBER);

@@ -96,8 +96,8 @@ export class AuthController {
 
   // Отправка одноразового кода на почту
   @Post('/login/mail')
-  async loginMail(@Body() dto: any) {
-    const userData = await this.authService.loginMail(dto.email);
+  async loginMail(@Body() dto: any, @Req() req: any) {
+    const userData = await this.authService.loginMail(dto.email, req.headers['fingerprint']);
     return userData;
   }
 

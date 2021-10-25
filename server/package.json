@@ -49,6 +49,7 @@
     "jsonwebtoken": "^8.5.1",
     "nestjs-twilio": "^2.1.0",
     "nodemailer": "^6.6.2",
+    "otp-generator": "^3.0.0",
     "passfather": "^3.0.1",
     "passport": "^0.4.1",
     "passport-facebook": "^3.0.0",

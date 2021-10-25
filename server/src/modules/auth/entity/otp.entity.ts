@@ -22,6 +22,10 @@ export class OTPEntity extends BaseEntity {
   //   @ManyToOne(() => UserEntity, (userEntity: UserEntity) => userEntity.id)
   //   @JoinTable({ name: 'userId' })
   //   user: UserEntity;
+
+  @Column({ type: 'text', unique: true, nullable: true })
+  email: string;
+
   @Column({ nullable: true })
   code: string;
 

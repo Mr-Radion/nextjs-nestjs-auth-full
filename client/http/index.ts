@@ -32,7 +32,7 @@ const $api = axios.create({
 });
 
 // при каждом запросе на сервер мы вытаскиваем текущий "access" токен сохраненный в куки и отправляем на сервер для аутенфикации
-// access токен актуален всего 30 минут, поэтому это более безопасно, если комбинировать с одновременной проверкой refresh tokena через сессии
+// access токен актуален всего 10 минут, поэтому это более безопасно, если комбинировать с одновременной проверкой refresh tokena через сессии
 $api.interceptors.request.use(async config => {
   config.headers.Authorization = `Bearer ${Cookies.get('token-access')}`;
   config.headers.fingerprint = await fingerprint;
