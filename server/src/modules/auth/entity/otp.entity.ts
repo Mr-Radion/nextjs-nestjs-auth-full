@@ -29,11 +29,11 @@ export class OTPEntity extends BaseEntity {
   @Column({ nullable: true })
   code: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   fingerprint: string;
 
   @Column()
-  expiresIn: string;
+  expiresIn: number;
 
   @CreateDateColumn({
     name: 'creation_at',

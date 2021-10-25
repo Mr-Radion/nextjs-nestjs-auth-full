@@ -53,7 +53,9 @@ export class AuthService {
     const generatorOtp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
 
     // сохранение в бд кода
-    await this.otpModel.save({ email, code: generatorOtp, fingerprint });
+    let currentTime = new Date().getTime(); // добавить срок жизни 5 мин
+    // важно учесть повторную отправку, чтобы была проверка, если срок жизни истек, то выполняем запрос в бд с удалением старого кода и добавлением нового
+    await this.otpModel.save({ email, code: generatorOtp, fingerprint, expiresIn: currentTime });
 
     // отправление на почту
     await this.mailService.sendMailCode(email, generatorOtp);
@@ -83,6 +85,26 @@ export class AuthService {
       } else {
         // создание пользователя и токен сессия, если данный юзер в бд существует использовать его данные для входа, иначе создать пароль?
         // user.save()
+        const findUser = await this.getUserByEmail(email);
+        let createUser: any;
+
+        if (!findUser) {
+          // user creation
+          createUser = new UserEntity();
+          createUser.email = email;
+          createUser.isActivated = true;
+          await createUser.save();
+        }
+
+        const userDataAndTokens = await this.tokenSession(
+          findUser ?? createUser,
+          ip,
+          ua,
+          fingerprint,
+          os,
+        );
+
+        return userDataAndTokens;
       }
     }
 
