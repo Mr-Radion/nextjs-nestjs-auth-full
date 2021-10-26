@@ -9,12 +9,9 @@ export const LoginForm: FC = observer(() => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
+  const [mail, setMail] = useState<string>('');
   const [otpCode, setOTPCode] = useState<string>('');
   const { store } = useContext(Context);
-
-  const googleFetch = () => {
-    fetch('http://localhost:5000/api/auth/google');
-  };
 
   return (
     <Box
@@ -28,13 +25,10 @@ export const LoginForm: FC = observer(() => {
         },
       }}
     >
-      {/* <Button color="primary" variant="contained" onClick={() => googleFetch()}>
-          Google
-        </Button> */}
       <GoogleButton />
       <FacebookButton />
       <form>
-        <h3>Верификация через мобильный телефон</h3>
+        <h3>Верификация через мобильный телефон или почту</h3>
         <TextField
           onChange={e => setPhone(e.target.value)}
           value={phone}
@@ -46,11 +40,28 @@ export const LoginForm: FC = observer(() => {
           required
         />
         <TextField
+          onChange={e => setMail(e.target.value)}
+          value={mail}
+          className="mb-20"
+          size="small"
+          label="Введите адрес электронной почты"
+          variant="outlined"
+          fullWidth
+          required
+        />
+        <Button color="primary" variant="contained" onClick={() => store.loginPhone(phone, 'sms')}>
+          Отправить код на телефон
+        </Button>
+        <Button color="primary" variant="contained" onClick={() => store.loginMail(mail)}>
+          Отправить код на почту
+        </Button>
+
+        <TextField
           onChange={e => setOTPCode(e.target.value)}
           value={otpCode}
           className="mb-20"
           size="small"
-          label="Введите одноразовый код доступа"
+          label="Введите полученный одноразовый код доступа"
           variant="outlined"
           fullWidth
           required
@@ -60,7 +71,10 @@ export const LoginForm: FC = observer(() => {
           variant="contained"
           onClick={() => store.verifyPhone(phone, otpCode)}
         >
-          Войти
+          Войти через телефон
+        </Button>
+        <Button color="primary" variant="contained" onClick={() => store.verifyMail(mail, otpCode)}>
+          Войти через почту
         </Button>
       </form>
       <form>

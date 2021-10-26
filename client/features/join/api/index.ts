@@ -40,6 +40,22 @@ export class AuthService {
     );
   }
 
+  static async loginMailApi(email: string): Promise<AxiosResponse<any>> {
+    return $api.post<any>('/auth/login/mail', {
+      email,
+    });
+  }
+
+  static async verifyMailApi(
+    mail: string,
+    otpCode: string,
+  ): Promise<AxiosResponse<AuthVerifyPhoneResponse>> {
+    return $api.post<AuthVerifyPhoneResponse>('/auth/verify/mail', {
+      email: mail,
+      code: otpCode,
+    });
+  }
+
   static async logout(): Promise<void> {
     return $api.post('/auth/logout');
   }

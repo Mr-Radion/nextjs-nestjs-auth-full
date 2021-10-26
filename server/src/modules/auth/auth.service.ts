@@ -51,11 +51,21 @@ export class AuthService {
   async loginMail(email: string, fingerprint: string) {
     // генерация одноразовых паролей
     const generatorOtp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
-
+    let data = await this.otpModel.find({ email, fingerprint }); //  нужен ли тут fingerprint?
     // сохранение в бд кода
-    let currentTime = new Date().getTime(); // добавить срок жизни 5 мин
-    // важно учесть повторную отправку, чтобы была проверка, если срок жизни истек, то выполняем запрос в бд с удалением старого кода и добавлением нового
-    await this.otpModel.save({ email, code: generatorOtp, fingerprint, expiresIn: currentTime });
+    let currentTime = new Date().getTime();
+    let lifeSpan = currentTime + 300; // добавить срок жизни 5 мин
+
+    // если срок ранее отправленного кода еще не истек, мы не можем повторно отправить код
+    let diff: any = Number(data[0].expiresIn) - currentTime;
+    if (diff < 0) {
+      return {
+        message: 'Token Expire',
+        statusText: 'error',
+      };
+    }
+
+    await this.otpModel.save({ email, code: generatorOtp, fingerprint, expiresIn: lifeSpan });
 
     // отправление на почту
     await this.mailService.sendMailCode(email, generatorOtp);
@@ -108,7 +118,7 @@ export class AuthService {
       }
     }
 
-    // ?. Удаление лишних кодов
+    // 3. Удаление лишних кодов
     // если на почту отправился, а в бд не сохранился обыграть или в бд сохранился, а на почту не отправился
     // если такого code в бд нету, но есть другой с того же браузера(не другого), то удалить код прошлый, видимо он не отправился вовремя на почту или т.п ?
     if (!data.length) {

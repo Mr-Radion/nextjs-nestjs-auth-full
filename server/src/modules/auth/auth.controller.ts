@@ -103,7 +103,7 @@ export class AuthController {
 
   // Проверка одноразового кода отправленного на почту и верификация пользователя
   @Post('/verify/mail')
-  async VerifyMail(@Body() dto: any, @Req() req: any, @Ip() ip: any) {
+  async VerifyMail(@Body() dto: any, @Req() req: any, @Ip() ip: any, @Res() res: any) {
     const userData = await this.authService.verifyMail(
       dto.email,
       dto.code,
@@ -112,6 +112,18 @@ export class AuthController {
       req.headers['fingerprint'],
       req.headers['sec-ch-ua-platform'],
     );
+    if (userData && !hasUserAgent(req).mobile) {
+      res.clearCookie('token');
+      res.cookie('token', userData.user.refreshToken, {
+        maxAge: 60 * 24 * 60 * 60 * 1000, // 60 days unix-time
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: true,
+      });
+      delete userData.user.refreshToken;
+      return userData;
+    }
+
     return userData;
   }
 
