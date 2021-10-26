@@ -1,4 +1,6 @@
-import crypto from 'crypto'; // crypto.randomInt() более надежная альтернатива чем Math.random(), менее предсказуемая
+// crypto.randomInt() more reliable alternative than Math.random (), less predictable
+// note here https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+// crypto documentation https://nodejs.org/api/crypto.html and https://nodejs.org/api/crypto.html#cryptorandomintmin-max-callback
 
 // more example alphabets
 // let alphabetsZ = {};
@@ -22,21 +24,20 @@ type OtpOptions = {
 };
 
 const otpGenerator = {
-  generate: function (length: number, options: OtpOptions) {
+  generate: async function (length: number, options: OtpOptions) {
+    const { randomInt } = await import('crypto');
     length = length || 10;
 
     const allowsChars =
-      (options.digits && digits) +
-      (options.alphabets && alphabets) +
-      (options.upperCase && upperCase) +
-      (options.specialChars && specialChars); // если указали опцию digits добавляем '0123456789', если указали еще specialChars, то добавляем '0123456789' + '#!&@' и т.д.
-
-    console.log({ allowsChars });
+      ((options.digits || '') && digits) +
+      ((options.alphabets || '') && alphabets) +
+      ((options.upperCase || '') && upperCase) +
+      ((options.specialChars || '') && specialChars);
 
     let otpCode: string = '';
 
     while (otpCode.length < length) {
-      const charIndex = crypto.randomInt(0, allowsChars.length); // min and max number
+      const charIndex = randomInt(0, allowsChars.length);
       console.log({ charIndex });
       otpCode += allowsChars[charIndex];
     }

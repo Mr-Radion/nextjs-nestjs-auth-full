@@ -101,13 +101,13 @@ export class AuthService {
 
     await this.otpModel.save({
       email,
-      code: generatorOtp,
+      code: await generatorOtp,
       fingerprint,
       expiresIn: String(lifeSpan),
     });
 
     // отправление на почту
-    await this.mailService.sendMailCode(email, generatorOtp);
+    await this.mailService.sendMailCode(email, await generatorOtp);
   }
 
   // проверка валидности одноразового кода, мгновенная активация аккаунта через почту,
