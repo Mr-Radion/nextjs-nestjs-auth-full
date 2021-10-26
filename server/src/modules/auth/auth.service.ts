@@ -13,7 +13,8 @@ import { UserRolesEntity } from '../roles/entity';
 import { RoleService } from '../roles/roles.service';
 import { MailService } from '../mail/mail.service';
 import { PhoneService } from '../phone/phone.service';
-import otpGenerator from 'otp-generator';
+// import speakeasy from 'speakeasy';
+import otpGenerator from 'src/utils/otp-generator';
 // import passfather from 'passfather';
 import { generate } from 'generate-password';
 
@@ -48,24 +49,62 @@ export class AuthService {
   }
 
   // отправляем сгенерированный одноразовый код на почту
-  async loginMail(email: string, fingerprint: string) {
+  async loginOtpMail(email: string, fingerprint: string) {
     // генерация одноразовых паролей
-    const generatorOtp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
-    let data = await this.otpModel.find({ email, fingerprint }); //  нужен ли тут fingerprint?
-    // сохранение в бд кода
+    // с помощью speakeasy https://www.npmjs.com/package/speakeasy, в данном случае к тому же не нужно хранить код в бд
+    // const tokenOtp = await speakeasy.totp({
+    //   secret: process.env.SPEAKEASY_SECRET!,
+    //   // - Base64 позволяет кодировать(не шифровать!) информацию, представленную набором байтов, используя всего 64 символа: A-Z, a-z, 0-9, /, +.
+    //   // В конце кодированной последовательности может содержаться несколько спецсимволов (обычно “=”).
+    //   // - Base32 использует только 32 символа: A-Z (или a-z), 2-7. Может содержать в конце кодированной последовательности несколько спецсимволов
+    //   // (по аналогии с base64).
+    //   encoding: 'base32',
+    //   // digits: SPEAKEASY_DIGITS!
+    //   step: Number(process.env.SPEAKEASY_STEP)!, // 30s
+    //   // window: 1 // pre 30s cur 30s nxt 30s
+    // });
+
+    // другая версия генерации кода скопирована с пакета otp-generator https://www.npmjs.com/package/otp-generator но для ts
+    const generatorOtp = otpGenerator.generate(6, {
+      digits: true,
+      upperCase: false,
+      specialChars: false,
+    });
+
+    // try {
+    // } catch (error) {
+    // } finally {
+    // await this.otpModel.save({ email, code: generatorOtp, fingerprint, expiresIn: lifeSpan });
+    // // отправление на почту
+    // await this.mailService.sendMailCode(email, generatorOtp);
+    // }
+
+    // const generatorOtp = '12345';
+
+    //  нужен ли тут fingerprint? и как быть с тем, что выдает ошибку, когда записи нету останавливая код
+    // let data = await this.otpModel.find({ email, fingerprint });
+
+    // сохранение в бд одноразового кода
     let currentTime = new Date().getTime();
     let lifeSpan = currentTime + 300; // добавить срок жизни 5 мин
 
     // если срок ранее отправленного кода еще не истек, мы не можем повторно отправить код
-    let diff: any = Number(data[0].expiresIn) - currentTime;
-    if (diff < 0) {
-      return {
-        message: 'Token Expire',
-        statusText: 'error',
-      };
-    }
+    // if (data) {
+    //   let diff: any = Number(data[0].expiresIn) - currentTime;
+    //   if (diff < 0) {
+    //     return {
+    //       message: 'Token Expire',
+    //       statusText: 'error',
+    //     };
+    //   }
+    // }
 
-    await this.otpModel.save({ email, code: generatorOtp, fingerprint, expiresIn: lifeSpan });
+    await this.otpModel.save({
+      email,
+      code: generatorOtp,
+      fingerprint,
+      expiresIn: String(lifeSpan),
+    });
 
     // отправление на почту
     await this.mailService.sendMailCode(email, generatorOtp);
@@ -73,7 +112,7 @@ export class AuthService {
 
   // проверка валидности одноразового кода, мгновенная активация аккаунта через почту,
   // возможность вместо ввода кода входить прямо по ссылке в свой аккаунт на сайте
-  async verifyMail(
+  async verifyOtpMail(
     email: string,
     code: string,
     ip: string,
@@ -83,6 +122,19 @@ export class AuthService {
   ) {
     // 1. Поиск совпадений по коду в базе
     let data = await this.otpModel.find({ email, code, fingerprint });
+
+    // or с помощью speakeasy можно вытаскивать данные не из нашего бд
+    // const verified = await speakeasy.totp.verify({
+    //   secret: process.env.SPEAKEASY_SECRET!,
+    //   encoding: 'base32',
+    //   token: otp,
+    //   step: Number(process.env.SPEAKEASY_STEP)!, // 30s
+    //   window: 1,
+    // });
+
+    // if (verified) {
+    //   // ...
+    // }
 
     let response: any;
     // 2. Удаление просроченных кодов
@@ -357,6 +409,31 @@ export class AuthService {
     const userDataAndTokens = await this.tokenSession(user, ip, ua, fingerprint, os);
     return userDataAndTokens;
   }
+
+  // async passwordNewMailService(email: string) {
+  //   // ссылка активирует опр булевское свойство модели пользователя linkForPassword, после ее использования, она обратно превращается в false
+  //   // ссылка генерируется с помощью uuid как ссылка для активации
+  //   // ссылка ведет на опр страницу фронта с редиректом на страницу с вводом нового пароля и его повтора, если linkForPassword от бэка пришел true,
+  //   // по сути как и при активации аккаунта через почту нужно также редиректнуть
+  //   const user = await this.userModel.findOne({ email });
+
+  //   this.mailService.sendMailPasswordCreation(email);
+  //   // чтобы была возможность повторно создать новый пароль,
+  //   // мы возвращаем значение по умолчани, после того, как пользователь уже получил true
+  //   user.linkForPasswordActivated = false;
+  // }
+
+  // async activatePasswordLink(linkForPassword: string): Promise<any> {
+  //   const user = await this.userModel.findOne({ linkForPassword });
+  //   if (!user) {
+  //     throw new HttpException(`Некорректная ссылка активации`, HttpStatus.BAD_REQUEST);
+  //   }
+  //   user.linkForPasswordActivated = true;
+  //   await user.save();
+  //   return user;
+  // }
+
+  // async passwordNewSaveService() {}
 
   async tokenSession(userData: any, ip: string, ua: any, fingerprint?: any, os?: any) {
     if (!userData)

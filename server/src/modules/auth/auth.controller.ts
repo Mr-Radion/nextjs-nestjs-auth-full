@@ -97,14 +97,14 @@ export class AuthController {
   // Отправка одноразового кода на почту
   @Post('/login/mail')
   async loginMail(@Body() dto: any, @Req() req: any) {
-    const userData = await this.authService.loginMail(dto.email, req.headers['fingerprint']);
+    const userData = await this.authService.loginOtpMail(dto.email, req.headers['fingerprint']);
     return userData;
   }
 
   // Проверка одноразового кода отправленного на почту и верификация пользователя
   @Post('/verify/mail')
   async VerifyMail(@Body() dto: any, @Req() req: any, @Ip() ip: any, @Res() res: any) {
-    const userData = await this.authService.verifyMail(
+    const userData = await this.authService.verifyOtpMail(
       dto.email,
       dto.code,
       ip,
@@ -479,13 +479,24 @@ export class AuthController {
     }
   }
 
-  // Создание нового пароля
-  @Post('/password')
-  async passwordNew() {
-    // 1. Отправка сообщения с ссылкой на фронт (на почту или телефон, в зависимости от того, что ввели после нажатия кнопки забыли пароль),
-    // где далее в письме перейдя по ссылке нужно ввести и подтвердить новый пароль, контроллер сделать тут или в mail...
-    // 2. Принять введенный новый пароль и изменить его у пользователя в модели, прежде захэшировав
-  }
+  // // Создание нового пароля
+  // @Post('/password/mail')
+  // async passwordNewMail(@Body() body: any) {
+  //   this.authService.passwordNewMailService(body.email);
+  //   // 1. Отправка сообщения с ссылкой на фронт (на почту или телефон, в зависимости от того, что ввели после нажатия кнопки забыли пароль), данная процедура подтверждает,
+  //   // что меняет тот же человек
+  //   // где далее в письме перейдя по ссылке нужно ввести и подтвердить новый пароль, контроллер сделать тут или в mail...
+  //   // 2. Принять введенный новый пароль и изменить его у пользователя в модели, прежде захэшировав
+  // }
+
+  // @Post('/password/save')
+  // async passwordNewSave() {
+  //   this.authService.passwordNewSaveService();
+  //   // 1. Отправка сообщения с ссылкой на фронт (на почту или телефон, в зависимости от того, что ввели после нажатия кнопки забыли пароль), данная процедура подтверждает,
+  //   // что меняет тот же человек
+  //   // где далее в письме перейдя по ссылке нужно ввести и подтвердить новый пароль, контроллер сделать тут или в mail...
+  //   // 2. Принять введенный новый пароль и изменить его у пользователя в модели, прежде захэшировав
+  // }
 
   // Изменение текущего пароля
   @Put('/password')

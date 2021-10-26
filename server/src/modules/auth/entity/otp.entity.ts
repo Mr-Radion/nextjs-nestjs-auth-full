@@ -33,7 +33,7 @@ export class OTPEntity extends BaseEntity {
   fingerprint: string;
 
   @Column()
-  expiresIn: number;
+  expiresIn: string;
 
   @CreateDateColumn({
     name: 'creation_at',
