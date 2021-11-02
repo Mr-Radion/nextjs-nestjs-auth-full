@@ -48,6 +48,12 @@ export class UserEntity extends BaseEntity {
   @Column({ nullable: true })
   password: string;
 
+  @Column({ nullable: true })
+  linkResetPassword: string;
+
+  // @Column({ default: false })
+  // linkForPasswordActivated: boolean;
+
   // @ApiModelProperty({ description: 'The search location of the User' })
   // @Column()
   // searchIn: Position;

@@ -59,7 +59,7 @@ export class MailService {
       text: '',
       html: `
       <div>
-        ${`<div><p>Перейдите по ссылке для изменения пароля: ${link}</p><div>`}
+        ${`<div><p>Перейдите по ссылке для изменения пароля: <a href=${link}>Ссылка</a></p><div>`}
       </div>
     `,
     });

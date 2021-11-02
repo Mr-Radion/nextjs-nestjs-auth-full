@@ -1,12 +1,12 @@
 // import styles from '../styles/Home.module.css'
 import Cookies from 'js-cookie';
 import React from 'react';
-import PageNotFound from './404';
-import { MainLayot } from '../features/common/components';
+import PageNotFound from '../404';
+import { MainLayot } from '../../features/common/components';
 import {
   LoginForm,
   // FacebookButtonReact
-} from '../features/join';
+} from '../../features/join';
 import { useRouter } from 'next/router';
 
 export default function Join() {

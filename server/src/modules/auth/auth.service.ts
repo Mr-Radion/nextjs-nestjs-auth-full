@@ -1,4 +1,11 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  MethodNotAllowedException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectTwilio, TwilioClient } from 'nestjs-twilio';
 import * as bcrypt from 'bcryptjs';
@@ -379,6 +386,71 @@ export class AuthService {
     user.isActivated = true;
     await user.save();
     return user;
+  }
+
+  async resetPassword(email: any) {
+    const user = await this.getUserByEmail(email); // проверяем наличие польхователя, для сброса пароля по почте
+
+    if (!user) {
+      throw new BadRequestException('Invalid email');
+    }
+
+    // проверяем активирован ли аккаунт(подтвердили ли почту) пользователя, если нет, то ошибку выдаем
+    if (!user.isActivated) {
+      throw new MethodNotAllowedException();
+    }
+
+    // создаем uuid ссылку, сохраняем ее в бд и вставляем в ссылку тега а href, для совершения гет запроса
+    const linkReset = uuidv4();
+
+    // определится с роутом на клиенте
+    const forgotLink = `${process.env.CLIENT_URL}/join/forgotpassword?link=${linkReset}`;
+
+    // отправка ссылки на почту
+    await this.mailService.sendMailPasswordCreation(email, forgotLink);
+  }
+
+  async changeResetPassword(email: any, resetLink: any) {
+    const user = await this.getUserByEmail(email); // проверяем наличие польхователя, для сброса пароля по почте
+
+    if (!user) {
+      throw new BadRequestException('Invalid email');
+    }
+
+    if (resetLink && user.linkResetPassword !== resetLink) {
+      // вернуть ошибку о несовпадении ссылок или отсутствию ссылки
+      return;
+    }
+
+    // если все в порядке и ссылки совпадают, то редиректнуть на клиентскую страницу с формой, где можно создать новый пароль, для которого уже отд метод с сервисом
+    // (но как этот роут сделать закрытым? или обезопасить от изменения?)
+    // например можно в сервисе создания нового пароля не создавать новый пароль, если:
+    // 1 вар. флаг с passwordResetActive не равно true, при этом после изменения изменить флаг обратно на false, а true она становится когда проходит подтверждение
+    // в методе ссылкой changeResetPassword
+    // 2 вар. не допускать создание нового пароля, если в гет запрос клиентский в query параметр передан неверная ссылка? В таком случае можно без редиректов
+    // просто взять и сразу ссылку на клиентскую форму в теге а href указать, там передать ссылку в query параметр и с клиента уже совершить гет запрос
+    // для проверки ссылки в сервис changeResetPassword, при несовпадении клиент просто не отобразит страницу для создания нового пароля, этот вариант менее
+    // костыльный
+
+    // 2 вар, поэтому без всяких редиректов, просто ответ
+
+    return true;
+  }
+
+  // создание нового пароля при сбросе
+  async newResetPassword(email: any, password: any) {
+    const user = await this.userModel.findOne(email); // проверяем наличие польхователя, для сброса пароля по почте
+
+    if (!user) {
+      throw new BadRequestException('Invalid email');
+    }
+
+    const hashPassword = await bcrypt.hash(password, 5);
+    user.password = hashPassword;
+
+    user.save();
+
+    return;
   }
 
   async refreshToken(
