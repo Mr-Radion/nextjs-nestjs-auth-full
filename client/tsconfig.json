@@ -30,6 +30,6 @@
     "alwaysStrict": true,
     "sourceMap": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "next.config.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "next.config.js", "pages/join/resetpwd/[[...query]].tsx"],
   "exclude": ["node_modules", "next.config.js"]
 }

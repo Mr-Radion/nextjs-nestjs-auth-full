@@ -1,4 +1,5 @@
 import React, { FC, useContext, useState } from 'react';
+import Link from 'next/link';
 import { Button, Divider, TextField, Box } from '@material-ui/core';
 import { Context } from '../../../common/store';
 import { observer } from 'mobx-react-lite';
@@ -122,6 +123,9 @@ export const LoginForm: FC = observer(() => {
           Регистрация
         </Button>
       </form>
+      <Link href="/join/forgotpwd">
+        <a>Забыли пароль?</a>
+      </Link>
     </Box>
   );
 });

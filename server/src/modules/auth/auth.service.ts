@@ -389,7 +389,7 @@ export class AuthService {
   }
 
   async resetPassword(email: any) {
-    const user = await this.getUserByEmail(email); // проверяем наличие польхователя, для сброса пароля по почте
+    const user = await this.getUserByEmail(email); // проверяем наличие пользователя, для сброса пароля по почте
 
     if (!user) {
       throw new BadRequestException('Invalid email');
@@ -404,7 +404,7 @@ export class AuthService {
     const linkReset = uuidv4();
 
     // определится с роутом на клиенте
-    const forgotLink = `${process.env.CLIENT_URL}/join/forgotpassword?link=${linkReset}`;
+    const forgotLink = `${process.env.CLIENT_URL}/join/resetpwd?link=${linkReset}`;
 
     // отправка ссылки на почту
     await this.mailService.sendMailPasswordCreation(email, forgotLink);
