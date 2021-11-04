@@ -498,7 +498,7 @@ export class AuthController {
   //   // 2. Принять введенный новый пароль и изменить его у пользователя в модели, прежде захэшировав
   // }
 
-  @Post('/changeReset')
+  @Post('/changeresetlink')
   changeResetPwd(@Body() body: any) {
     return this.authService.changeResetPassword(body.email, body.link);
   }

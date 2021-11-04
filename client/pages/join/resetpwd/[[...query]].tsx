@@ -8,7 +8,7 @@ export default function ResetPassword() {
 
   React.useEffect(() => {
     $api
-      .post<any>('/auth/login/mail', {
+      .post<any>('/auth/changeresetlink', {
         email: query?.email,
         link: query?.link,
       })
